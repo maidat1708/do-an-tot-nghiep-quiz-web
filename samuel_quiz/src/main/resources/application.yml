@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: samuel_quiz
+  datasource:
+    url: "jdbc:mysql://localhost:3306/quiz"
+    username: root
+    password: 17082002
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  redis:
+    host: localhost
+    port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer  
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  # elasticsearch:
+  #   host: localhost
+  #   port: 9200
+  
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+kafka:
+  topics:
+    create-product: create_product
+    update-product: update_product
+    delete-product: delete_product
+
+jwt:
+  signerKey: "HNHRxud40W4l8FH8nNCbFuMcl7bnj9bb7WUudcz6sAHVGBYHJQbajJqwmXWjbQFG"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
