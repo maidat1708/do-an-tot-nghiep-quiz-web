@@ -8,9 +8,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.samuel_quiz.dto.request.UserCreateRequest;
-import com.example.samuel_quiz.dto.request.UserUpdateRequest;
 import com.example.samuel_quiz.dto.response.UserResponse;
+import com.example.samuel_quiz.dto.user.request.UserCreateRequest;
+import com.example.samuel_quiz.dto.user.request.UserUpdateRequest;
 import com.example.samuel_quiz.entities.User;
 import com.example.samuel_quiz.enums.Role;
 import com.example.samuel_quiz.exception.AppException;

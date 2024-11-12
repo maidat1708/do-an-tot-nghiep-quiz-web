@@ -4,9 +4,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-import com.example.samuel_quiz.dto.request.UserCreateRequest;
-import com.example.samuel_quiz.dto.request.UserUpdateRequest;
 import com.example.samuel_quiz.dto.response.UserResponse;
+import com.example.samuel_quiz.dto.user.request.UserCreateRequest;
+import com.example.samuel_quiz.dto.user.request.UserUpdateRequest;
 import com.example.samuel_quiz.entities.User;
 
 @Mapper(componentModel = "spring") // componentModel = "spring" -> create bean -> DI 

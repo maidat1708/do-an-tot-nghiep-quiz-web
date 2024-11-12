@@ -2,9 +2,9 @@ package com.example.samuel_quiz.service;
 
 import java.util.List;
 
-import com.example.samuel_quiz.dto.request.UserCreateRequest;
-import com.example.samuel_quiz.dto.request.UserUpdateRequest;
 import com.example.samuel_quiz.dto.response.UserResponse;
+import com.example.samuel_quiz.dto.user.request.UserCreateRequest;
+import com.example.samuel_quiz.dto.user.request.UserUpdateRequest;
 
 
 public interface IUserService {

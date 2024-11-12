@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.samuel_quiz.dto.request.UserCreateRequest;
-import com.example.samuel_quiz.dto.request.UserUpdateRequest;
 import com.example.samuel_quiz.dto.response.APIResponse;
 import com.example.samuel_quiz.dto.response.UserResponse;
+import com.example.samuel_quiz.dto.user.request.UserCreateRequest;
+import com.example.samuel_quiz.dto.user.request.UserUpdateRequest;
 import com.example.samuel_quiz.service.IUserService;
 
 import jakarta.validation.Valid;

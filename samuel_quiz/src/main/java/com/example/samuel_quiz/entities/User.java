@@ -1,18 +1,14 @@
 package com.example.samuel_quiz.entities;
 
-import java.time.LocalDate;
-
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Entity
 @Data
@@ -26,8 +22,11 @@ public class User {
     String id;
     String username;
     String password;
-    String firstname;
-    String lastname;
-    LocalDate dob;
     String roles;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    Profile profile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    Set<Result> results;
 }
