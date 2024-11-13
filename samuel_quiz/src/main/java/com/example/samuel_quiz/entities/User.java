@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,6 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     Profile profile;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Set<Result> results;
 }

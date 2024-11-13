@@ -23,7 +23,7 @@ public class Result {
     Long examDuration;
     LocalDateTime timeStart;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
     Quiz quiz;
 

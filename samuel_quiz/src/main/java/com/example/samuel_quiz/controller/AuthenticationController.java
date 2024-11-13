@@ -2,6 +2,7 @@ package com.example.samuel_quiz.controller;
 
 import java.text.ParseException;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +25,7 @@ import lombok.experimental.FieldDefaults;
 @RestController
 @RequestMapping("auth")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Tag(name = "AUTHENTICATION", description = "Xác thực")
 public class AuthenticationController {
 
     @Autowired

@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,7 +26,7 @@ public class Profile {
     LocalDate birthDay;
     Integer gender;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
 }

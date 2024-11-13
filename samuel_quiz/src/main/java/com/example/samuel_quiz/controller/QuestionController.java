@@ -2,6 +2,7 @@ package com.example.samuel_quiz.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import lombok.experimental.FieldDefaults;
 @RestController
 @RequestMapping("questions")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Tag(name = "QUESTION", description = "Câu hỏi")
 public class QuestionController {
 
     @Autowired

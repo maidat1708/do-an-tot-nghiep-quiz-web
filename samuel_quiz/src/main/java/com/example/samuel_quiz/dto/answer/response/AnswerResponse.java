@@ -10,5 +10,4 @@ public class AnswerResponse {
     String answerText;
     Integer isCorrect;
     Question question; // Trả về thông tin câu hỏi liên kết
-
 }
