@@ -1,4 +1,4 @@
-package com.example.samuel_quiz.dto.request;
+package com.example.samuel_quiz.dto.auth.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

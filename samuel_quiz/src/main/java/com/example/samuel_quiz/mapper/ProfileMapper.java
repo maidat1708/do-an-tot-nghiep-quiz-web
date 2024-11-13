@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.mapper;
 
+import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -10,7 +11,7 @@ import com.example.samuel_quiz.dto.profile.response.ProfileResponse;
 import com.example.samuel_quiz.entities.Profile;
 
 @Mapper(componentModel = "spring")
-public interface ProfileMapper {
+public interface ProfileMapper extends BaseMapper<Profile, ProfileDTO> {
 
     ProfileResponse toProfileResponse(Profile profile);
 

@@ -5,7 +5,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.example.samuel_quiz.dto.response.APIResponse;
+import com.example.samuel_quiz.dto.auth.response.APIResponse;
 
 
 @RestControllerAdvice

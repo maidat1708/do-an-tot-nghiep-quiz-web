@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.mapper;
 
+import com.example.samuel_quiz.dto.quiz.QuizDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -9,10 +10,8 @@ import com.example.samuel_quiz.dto.quiz.request.QuizUpdateRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
 import com.example.samuel_quiz.entities.Quiz;
 
-@Mapper(componentModel = "spring"
-, uses = { SubjectMapper.class, QuestionMapper.class, ResultMapper.class } // checkthem
-)
-public interface QuizMapper {
+@Mapper(componentModel = "spring")
+public interface QuizMapper extends BaseMapper<Quiz, QuizDTO> {
 
     @Mapping(target = "subject", source = "subject") // Lấy thông tin chi tiết của Subject
     @Mapping(target = "questions", source = "questions") // Lấy danh sách các câu hỏi liên kết

@@ -1,4 +1,4 @@
-package com.example.samuel_quiz.dto.request;
+package com.example.samuel_quiz.dto.auth.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -12,6 +12,6 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class VerifyTokenRequest {
-    String token;
+public class VerifyTokenResponse {
+    boolean valid;
 }

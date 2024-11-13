@@ -12,12 +12,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.samuel_quiz.dto.request.AuthenticationRequest;
-import com.example.samuel_quiz.dto.request.LogoutRequest;
-import com.example.samuel_quiz.dto.request.RefreshRequest;
-import com.example.samuel_quiz.dto.request.VerifyTokenRequest;
-import com.example.samuel_quiz.dto.response.AuthenticationResponse;
-import com.example.samuel_quiz.dto.response.VerifyTokenResponse;
+import com.example.samuel_quiz.dto.auth.request.AuthenticationRequest;
+import com.example.samuel_quiz.dto.auth.request.LogoutRequest;
+import com.example.samuel_quiz.dto.auth.request.RefreshRequest;
+import com.example.samuel_quiz.dto.auth.request.VerifyTokenRequest;
+import com.example.samuel_quiz.dto.auth.response.AuthenticationResponse;
+import com.example.samuel_quiz.dto.auth.response.VerifyTokenResponse;
 import com.example.samuel_quiz.entities.InvalidToken;
 import com.example.samuel_quiz.entities.User;
 import com.example.samuel_quiz.exception.AppException;

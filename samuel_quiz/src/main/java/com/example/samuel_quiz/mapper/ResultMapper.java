@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.mapper;
 
+import com.example.samuel_quiz.dto.result.ResultDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -10,7 +11,7 @@ import com.example.samuel_quiz.dto.result.response.ResultResponse;
 import com.example.samuel_quiz.entities.Result;
 
 @Mapper(componentModel = "spring")
-public interface ResultMapper {
+public interface ResultMapper extends BaseMapper<Result, ResultDTO> {
     // Chuyển đổi từ Result Entity sang ResultResponse DTO
     ResultResponse toResultResponse(Result result);
 

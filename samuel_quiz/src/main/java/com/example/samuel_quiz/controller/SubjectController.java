@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.samuel_quiz.dto.response.APIResponse;
+import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.dto.subject.request.SubjectCreateRequest;
 import com.example.samuel_quiz.dto.subject.request.SubjectUpdateRequest;
 import com.example.samuel_quiz.dto.subject.response.SubjectResponse;
@@ -25,7 +25,7 @@ import lombok.experimental.FieldDefaults;
 @RestController
 @RequestMapping("subjects")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Tag(name = "SUBJECT", description = "")
+@Tag(name = "SUBJECT", description = "Môn thi")
 public class SubjectController {
 
     @Autowired

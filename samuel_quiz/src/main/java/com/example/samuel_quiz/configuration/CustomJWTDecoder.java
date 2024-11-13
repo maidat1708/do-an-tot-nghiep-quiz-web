@@ -11,8 +11,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
-import com.example.samuel_quiz.dto.request.VerifyTokenRequest;
-import com.example.samuel_quiz.dto.response.VerifyTokenResponse;
+import com.example.samuel_quiz.dto.auth.request.VerifyTokenRequest;
+import com.example.samuel_quiz.dto.auth.response.VerifyTokenResponse;
 import com.example.samuel_quiz.exception.AppException;
 import com.example.samuel_quiz.exception.ErrorCode;
 import com.example.samuel_quiz.service.impl.AuthenticationService;

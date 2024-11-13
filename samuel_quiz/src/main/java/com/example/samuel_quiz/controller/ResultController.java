@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.samuel_quiz.dto.response.APIResponse;
+import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.dto.result.request.ResultCreateRequest;
 import com.example.samuel_quiz.dto.result.request.ResultUpdateRequest;
 import com.example.samuel_quiz.dto.result.response.ResultResponse;

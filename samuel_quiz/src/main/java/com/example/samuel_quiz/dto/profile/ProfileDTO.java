@@ -1,7 +1,5 @@
 package com.example.samuel_quiz.dto.profile;
 
-import com.example.samuel_quiz.dto.user.UserDTO;
-import com.example.samuel_quiz.entities.User;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -19,5 +17,4 @@ public class ProfileDTO {
     String address;
     LocalDate birthDay;
     Integer gender;
-    UserDTO user;
 }

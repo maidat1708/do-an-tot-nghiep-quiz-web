@@ -1,4 +1,4 @@
-package com.example.samuel_quiz.dto.response;
+package com.example.samuel_quiz.dto.auth.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -1,5 +1,7 @@
-package com.example.samuel_quiz.dto.response;
+package com.example.samuel_quiz.dto.user.response;
 
+
+import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,10 +10,14 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AuthenticationResponse {
-    String token;
+public class UserResponse {
+    String id;
+    String username;
+    String password;
+    String roles;
+    ProfileDTO profile;
 }

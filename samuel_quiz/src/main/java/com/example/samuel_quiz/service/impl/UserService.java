@@ -2,13 +2,14 @@ package com.example.samuel_quiz.service.impl;
 
 import java.util.List;
 
+import com.example.samuel_quiz.dto.user.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.samuel_quiz.dto.response.UserResponse;
+import com.example.samuel_quiz.dto.user.response.UserResponse;
 import com.example.samuel_quiz.dto.user.request.UserCreateRequest;
 import com.example.samuel_quiz.dto.user.request.UserUpdateRequest;
 import com.example.samuel_quiz.entities.User;
@@ -37,14 +38,16 @@ public class UserService implements IUserService {
 
     @Override
     public List<UserResponse> getUsers() {
-        return userRepo.findAll().stream()
-                .map(userMapper::tUserResponse).toList();
+        List<UserDTO> listUser = userMapper.toListDto(userRepo.findAll());
+        return listUser.stream()
+                .map(userMapper::tUserResponse)
+                .toList();
     }
 
     @Override
     public UserResponse getUser(String userId) {
         User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-        return userMapper.tUserResponse(user);
+        return userMapper.tUserResponse(userMapper.toDto(user));
     }
 
     @Override
@@ -55,7 +58,7 @@ public class UserService implements IUserService {
         // get paylad
         // var authority = context.getAuthentication().getAuthorities().toArray();
         User user = userRepo.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-        return userMapper.tUserResponse(user);
+        return userMapper.tUserResponse(userMapper.toDto(user));
     }
 
     @Override
@@ -63,23 +66,24 @@ public class UserService implements IUserService {
     public UserResponse createUser(UserCreateRequest request) {
         if (userRepo.existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.USER_EXISTED);
-        User user = userMapper.toUser(request);
+        UserDTO user = userMapper.toUser(request);
         String roles = Role.USER.name();
         user.setRoles(roles);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userMapper.tUserResponse(userRepo.save(user));
+        return userMapper.tUserResponse(userMapper.toDto(userRepo.save(userMapper.toEntity(user))));
     }
 
     @Override
     @Transactional
     public UserResponse updateUser(String userId, UserUpdateRequest request) {
         User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-        userMapper.updateUser(user, request);
+        UserDTO userDTO = userMapper.toDto(user);
+        userMapper.updateUser(userDTO, request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (request.getRoles() != null) {
             user.setRoles(request.getRoles());
         }
-        return userMapper.tUserResponse(userRepo.save(user));
+        return userMapper.tUserResponse(userMapper.toDto(userRepo.save(userMapper.toEntity(userDTO))));
     }
 
     @Override

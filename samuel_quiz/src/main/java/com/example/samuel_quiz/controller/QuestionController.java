@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.samuel_quiz.dto.question.request.QuestionCreateRequest;
 import com.example.samuel_quiz.dto.question.request.QuestionUpdateRequest;
 import com.example.samuel_quiz.dto.question.response.QuestionResponse;
-import com.example.samuel_quiz.dto.response.APIResponse;
+import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.service.IQuestionService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;

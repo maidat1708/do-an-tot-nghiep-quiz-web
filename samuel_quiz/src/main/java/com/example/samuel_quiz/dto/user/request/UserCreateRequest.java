@@ -1,6 +1,5 @@
 package com.example.samuel_quiz.dto.user.request;
 
-import java.time.LocalDate;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +28,8 @@ public class UserCreateRequest {
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\W)(?!.* ).{8,}$", 
     message = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one special character, one digital character")
     String password;
-
+    String email;
+    String firstName;
+    String lastName;
     String rule;
 }
