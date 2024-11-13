@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.samuel_quiz.dto.auth.response.APIResponse;
 
+import java.util.Objects;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,7 +33,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<APIResponse<String>> handlingValidationException(MethodArgumentNotValidException exception) {
         @SuppressWarnings("null")
-        String message = exception.getFieldError().getDefaultMessage();
+        String message = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
         APIResponse<String> apiResponse = new APIResponse<>();
         apiResponse.setCode(999);
         apiResponse.setMessage(message);

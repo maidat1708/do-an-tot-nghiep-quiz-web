@@ -94,9 +94,7 @@ public class AuthenticationService implements IAuthenticationService {
                     .expiryTime(expiryTime)
                     .build();
             invalidTokenRepo.save(invalidToken);
-        } catch (JOSEException e) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, e.getMessage());
-        } catch (ParseException e) {
+        } catch (JOSEException | ParseException e) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION, e.getMessage());
         }
 

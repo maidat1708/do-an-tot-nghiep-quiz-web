@@ -49,7 +49,7 @@ public class SecurityConfig {
         httpSecurity
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/users", "auth/verify", "auth/login", "auth/logout","auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users", "auth/verify", "auth/login", "auth/logout","auth/refresh", "auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/products").permitAll()
                         // if use hasRole -> have to custom authority prefix ->
                         // use jwtAuthenticationConverter -> change "SCOPE_ADMIN" -> "ROLE_ADMIN"
