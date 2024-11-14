@@ -2,6 +2,7 @@ package com.example.samuel_quiz.service.impl;
 
 import java.util.List;
 
+import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,22 +32,22 @@ public class ProfileService implements IProfileService {
     @Override
     public List<ProfileResponse> getProfiles() {
         return profileRepo.findAll().stream()
-                .map(profileMapper::toProfileResponse).toList();
+                .map(profile -> profileMapper.toProfileResponse(profileMapper.toDto(profile))).toList();
     }
 
     @Override
     public ProfileResponse getProfile(Long profileId) {
         Profile profile = profileRepo.findById(profileId)
                 .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
-        return profileMapper.toProfileResponse(profile);
+        return profileMapper.toProfileResponse(profileMapper.toDto(profile));
     }
 
     @Override
     @Transactional
     public ProfileResponse createProfile(ProfileCreateRequest request) {
-        Profile profile = profileMapper.toProfile(request);
-        Profile savedProfile = profileRepo.save(profile);
-        return profileMapper.toProfileResponse(savedProfile);
+        ProfileDTO profile = profileMapper.toProfile(request);
+        Profile savedProfile = profileRepo.save(profileMapper.toEntity(profile));
+        return profileMapper.toProfileResponse(profileMapper.toDto(savedProfile));
     }
 
     @Override
@@ -54,9 +55,9 @@ public class ProfileService implements IProfileService {
     public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request) {
         Profile existingProfile = profileRepo.findById(profileId)
                 .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
-        profileMapper.updateProfile(existingProfile, request);
+        profileMapper.updateProfile(profileMapper.toDto(existingProfile), request);
         Profile updatedProfile = profileRepo.save(existingProfile);
-        return profileMapper.toProfileResponse(updatedProfile);
+        return profileMapper.toProfileResponse(profileMapper.toDto(updatedProfile));
     }
 
     @Override

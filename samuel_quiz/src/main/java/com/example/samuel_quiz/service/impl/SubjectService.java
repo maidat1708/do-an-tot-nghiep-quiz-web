@@ -31,7 +31,7 @@ public class SubjectService implements ISubjectService {
 
     @Override
     public List<SubjectResponse> getSubjects() {
-        return subjectRepo.findAll().stream()
+        return subjectMapper.toListDto(subjectRepo.findAll()).stream()
                 .map(subjectMapper::toSubjectResponse)
                 .collect(Collectors.toList());
     }
@@ -40,15 +40,14 @@ public class SubjectService implements ISubjectService {
     public SubjectResponse getSubject(Long subjectId) {
         Subject subject = subjectRepo.findById(subjectId)
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-        return subjectMapper.toSubjectResponse(subject);
+        return subjectMapper.toSubjectResponse(subjectMapper.toDto(subject));
     }
 
     @Override
     @Transactional
     public SubjectResponse createSubject(SubjectCreateRequest request) {
-        Subject subject = subjectMapper.toSubject(request);
-        Subject savedSubject = subjectRepo.save(subject);
-        return subjectMapper.toSubjectResponse(savedSubject);
+        Subject subject = subjectRepo.save(subjectMapper.toEntity(subjectMapper.toSubject(request)));
+        return subjectMapper.toSubjectResponse(subjectMapper.toDto(subject));
     }
 
     @Override
@@ -56,9 +55,9 @@ public class SubjectService implements ISubjectService {
     public SubjectResponse updateSubject(Long subjectId, SubjectUpdateRequest request) {
         Subject existingSubject = subjectRepo.findById(subjectId)
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-        subjectMapper.updateSubject(existingSubject, request);
+        subjectMapper.updateSubject(subjectMapper.toDto(existingSubject), request);
         Subject updatedSubject = subjectRepo.save(existingSubject);
-        return subjectMapper.toSubjectResponse(updatedSubject);
+        return subjectMapper.toSubjectResponse(subjectMapper.toDto(updatedSubject));
     }
 
     @Override

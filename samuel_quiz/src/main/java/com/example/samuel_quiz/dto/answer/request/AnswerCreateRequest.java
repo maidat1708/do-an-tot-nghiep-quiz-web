@@ -1,8 +1,11 @@
 package com.example.samuel_quiz.dto.answer.request;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 @Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class AnswerCreateRequest {
     String answerText;
     Integer isCorrect;

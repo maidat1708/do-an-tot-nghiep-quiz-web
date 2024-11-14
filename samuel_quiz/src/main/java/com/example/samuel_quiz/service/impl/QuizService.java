@@ -3,6 +3,8 @@ package com.example.samuel_quiz.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.samuel_quiz.dto.quiz.QuizDTO;
+import com.example.samuel_quiz.mapper.SubjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +35,13 @@ public class QuizService implements IQuizService {
 
     @Autowired
     QuizMapper quizMapper;
+    @Autowired
+    private SubjectMapper subjectMapper;
 
     @Override
     public List<QuizResponse> getQuizzes() {
         return quizRepo.findAll().stream()
-                .map(quizMapper::toQuizResponse)
+                .map(quiz -> quizMapper.toQuizResponse(quizMapper.toDto(quiz))) // Ánh xạ từ Quiz Entity -> QuizDTO -> QuizResponse
                 .collect(Collectors.toList());
     }
 
@@ -45,7 +49,8 @@ public class QuizService implements IQuizService {
     public QuizResponse getQuiz(Long quizId) {
         Quiz quiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
-        return quizMapper.toQuizResponse(quiz);
+        QuizDTO quizDTO = quizMapper.toDto(quiz);
+        return quizMapper.toQuizResponse(quizDTO);
     }
 
     @Override
@@ -56,12 +61,12 @@ public class QuizService implements IQuizService {
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found with ID: " + request.getSubjectId()));
 
         // Tạo Quiz từ request và set subject
-        Quiz quiz = quizMapper.toQuiz(request);
-        quiz.setSubject(subject);
+        QuizDTO quiz = quizMapper.toQuiz(request);
+        quiz.setSubject(subjectMapper.toDto(subject));
 
         // Lưu Quiz
-        Quiz savedQuiz = quizRepo.save(quiz);
-        return quizMapper.toQuizResponse(savedQuiz);
+        Quiz savedQuiz = quizRepo.save(quizMapper.toEntity(quiz));
+        return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
     }
 
     @Override
@@ -69,9 +74,12 @@ public class QuizService implements IQuizService {
     public QuizResponse updateQuiz(Long quizId, QuizUpdateRequest request) {
         Quiz existingQuiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
-        quizMapper.updateQuiz(existingQuiz, request);
+
+        quizMapper.updateQuiz(quizMapper.toDto(existingQuiz), request);  // Cập nhật từ QuizUpdateRequest -> Quiz Entity
         Quiz updatedQuiz = quizRepo.save(existingQuiz);
-        return quizMapper.toQuizResponse(updatedQuiz);
+
+        // Trả về QuizResponse sau khi cập nhật
+        return quizMapper.toQuizResponse(quizMapper.toDto(updatedQuiz));
     }
 
     @Override

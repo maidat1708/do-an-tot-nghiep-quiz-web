@@ -6,9 +6,12 @@ import com.example.samuel_quiz.entities.Question;
 import com.example.samuel_quiz.entities.Result;
 import com.example.samuel_quiz.entities.Subject;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 @Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuizResponse {
     Long id; // ID của Quiz
     String quizName; // Tên của Quiz

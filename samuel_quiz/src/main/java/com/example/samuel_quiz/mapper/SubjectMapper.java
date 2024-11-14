@@ -15,15 +15,15 @@ public interface SubjectMapper extends BaseMapper<Subject, SubjectDTO> {
 
     @Mapping(target = "quizzes", source = "quizzes") // Map danh sách Quiz
     @Mapping(target = "questions", source = "questions") // Map danh sách Question
-    SubjectResponse toSubjectResponse(Subject subject);
+    SubjectResponse toSubjectResponse(SubjectDTO subject);
 
     @Mapping(target = "id", ignore = true) // ID sẽ được tự động tạo
     @Mapping(target = "quizzes", ignore = true) // Quizzes sẽ được xử lý riêng
     @Mapping(target = "questions", ignore = true) // Questions sẽ được xử lý riêng
-    Subject toSubject(SubjectCreateRequest request);
+    SubjectDTO toSubject(SubjectCreateRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "quizzes", ignore = true)
     @Mapping(target = "questions", ignore = true)
-    void updateSubject(@MappingTarget Subject subject, SubjectUpdateRequest request);
+    void updateSubject(@MappingTarget SubjectDTO subject, SubjectUpdateRequest request);
 }

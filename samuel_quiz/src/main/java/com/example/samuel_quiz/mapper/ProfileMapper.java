@@ -13,10 +13,10 @@ import com.example.samuel_quiz.entities.Profile;
 @Mapper(componentModel = "spring")
 public interface ProfileMapper extends BaseMapper<Profile, ProfileDTO> {
 
-    ProfileResponse toProfileResponse(Profile profile);
+    ProfileResponse toProfileResponse(ProfileDTO profile);
 
-    Profile toProfile(ProfileCreateRequest request);
+    ProfileDTO toProfile(ProfileCreateRequest request);
 
     @Mapping(target = "id", ignore = true) // Không update ID
-    void updateProfile(@MappingTarget Profile profile, ProfileUpdateRequest request);
+    void updateProfile(@MappingTarget ProfileDTO profile, ProfileUpdateRequest request);
 }

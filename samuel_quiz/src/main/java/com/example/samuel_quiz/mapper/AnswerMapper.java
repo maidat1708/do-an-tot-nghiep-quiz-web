@@ -14,13 +14,13 @@ import com.example.samuel_quiz.entities.Answer;
 public interface AnswerMapper extends BaseMapper<Answer, AnswerDTO> {
 
     @Mapping(target = "question", source = "question")
-    AnswerResponse toAnswerResponse(Answer answer);
+    AnswerResponse toAnswerResponse(AnswerDTO answer);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "question", ignore = true)
-    Answer toAnswer(AnswerCreateRequest request);
+    AnswerDTO toAnswer(AnswerCreateRequest request);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "question", ignore = true)
-    void updateAnswer(@MappingTarget Answer answer, AnswerUpdateRequest request);
+    void updateAnswer(@MappingTarget AnswerDTO answer, AnswerUpdateRequest request);
 }

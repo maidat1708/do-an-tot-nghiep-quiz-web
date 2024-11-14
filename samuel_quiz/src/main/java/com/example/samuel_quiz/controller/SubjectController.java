@@ -46,7 +46,7 @@ public class SubjectController {
     }
 
     @PostMapping
-    public APIResponse<SubjectResponse> createSubject(@RequestBody SubjectCreateRequest request) {
+    APIResponse<SubjectResponse> createSubject(@RequestBody SubjectCreateRequest request) {
         return APIResponse.<SubjectResponse>builder()
                 .result(subjectService.createSubject(request))
                 .build();

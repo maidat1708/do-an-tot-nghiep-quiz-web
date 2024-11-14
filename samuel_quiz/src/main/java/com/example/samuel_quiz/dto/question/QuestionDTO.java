@@ -20,4 +20,5 @@ public class QuestionDTO {
     Integer level;
     Set<Answer> answers;
     Subject subject;
+    Set<Quiz> quizzes;
 }

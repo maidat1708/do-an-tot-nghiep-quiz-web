@@ -5,9 +5,12 @@ import java.util.Set;
 import com.example.samuel_quiz.entities.Question;
 import com.example.samuel_quiz.entities.Quiz;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
 @Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class SubjectResponse {
     Long id; // ID của Subject
     String subjectName; // Tên Subject

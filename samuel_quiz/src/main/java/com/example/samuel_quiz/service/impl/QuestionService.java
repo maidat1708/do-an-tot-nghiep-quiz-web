@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.samuel_quiz.dto.question.QuestionDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +45,7 @@ public class QuestionService implements IQuestionService {
     @Override
     public List<QuestionResponse> getQuestions() {
         return questionRepo.findAll().stream()
-                .map(questionMapper::toQuestionResponse)
+                .map(question -> questionMapper.toQuestionResponse(questionMapper.toDto(question)))
                 .collect(Collectors.toList());
     }
 
@@ -52,7 +53,7 @@ public class QuestionService implements IQuestionService {
     public QuestionResponse getQuestion(Long questionId) {
         Question question = questionRepo.findById(questionId)
                 .orElseThrow(() -> new EntityNotFoundException("Question not found"));
-        return questionMapper.toQuestionResponse(question);
+        return questionMapper.toQuestionResponse(questionMapper.toDto(question));
     }
 
     @Override
@@ -63,7 +64,7 @@ public class QuestionService implements IQuestionService {
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
 
         // Tạo Question từ request và set subject
-        Question question = questionMapper.toQuestion(request);
+        QuestionDTO question = questionMapper.toQuestion(request);
         question.setSubject(subject);
 
         // Lấy danh sách các Answer theo ID
@@ -71,8 +72,8 @@ public class QuestionService implements IQuestionService {
         question.setAnswers(answers);
 
         // Lưu Question
-        Question savedQuestion = questionRepo.save(question);
-        return questionMapper.toQuestionResponse(savedQuestion);
+        Question savedQuestion = questionRepo.save(questionMapper.toEntity(question));
+        return questionMapper.toQuestionResponse(questionMapper.toDto(savedQuestion));
     }
 
     @Override
@@ -80,9 +81,9 @@ public class QuestionService implements IQuestionService {
     public QuestionResponse updateQuestion(Long questionId, QuestionUpdateRequest request) {
         Question existingQuestion = questionRepo.findById(questionId)
                 .orElseThrow(() -> new EntityNotFoundException("Question not found"));
-        questionMapper.updateQuestion(existingQuestion, request);
+        questionMapper.updateQuestion(questionMapper.toDto(existingQuestion), request);
         Question updatedQuestion = questionRepo.save(existingQuestion);
-        return questionMapper.toQuestionResponse(updatedQuestion);
+        return questionMapper.toQuestionResponse(questionMapper.toDto(updatedQuestion));
     }
 
     @Override
