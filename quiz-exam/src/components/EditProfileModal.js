@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom'; // Dùng để điều hướng
 
 const EditProfileModal = ({ open, onClose }) => {
-  const { user, updateUser } = useContext(AuthContext); // Lấy user và updateUser từ context
+  const { fetchUserData, updateUser, loginResponse } = useContext(AuthContext); // Lấy user và updateUser từ context
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -20,21 +20,28 @@ const EditProfileModal = ({ open, onClose }) => {
   });
   const navigate = useNavigate(); // Dùng để điều hướng về trang chủ
 
+  // Lấy dữ liệu người dùng khi modal mở
   useEffect(() => {
-    if (user) {
-      setFormData({
-        email: user.email,
-        firstName: user.profile.firstName,
-        lastName: user.profile.lastName,
-        phoneNumber: user.profile.phoneNumber,
-        address: user.profile.address,
-        birthDay: user.profile.birthDay,
-        gender: user.profile.gender,
-        password: '',
-        newPassword: '',
-      });
+    const fetchData = async () => {
+      console.log(loginResponse)
+      const userData = await fetchUserData(loginResponse.result.userId);
+      console.log(userData);
+      if (userData) {
+        setFormData({
+          email: userData.result.profile.email || '',
+          firstName: userData.result.profile.firstName || '',
+          lastName: userData.result.profile.lastName || '',
+          phoneNumber: userData.result.profile.phoneNumber || '',
+          address: userData.result.profile.address || '',
+          birthDay: userData.result.profile.birthDay || '',
+          gender: userData.result.profile.gender || 0,
+          password: '',
+          newPassword: '',
+        });
+      }
     }
-  }, [user]);
+    fetchData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +67,7 @@ const EditProfileModal = ({ open, onClose }) => {
     const passwordUpdate = newPassword ? newPassword : password;
 
     // Gọi updateUser từ context để cập nhật thông tin người dùng
-    updateUser(updatedInfo, passwordUpdate);
+    updateUser(updatedInfo,loginResponse.result.userId);
 
     toast.success('Thông tin đã được cập nhật');
     onClose(); // Đóng popup
@@ -74,7 +81,7 @@ const EditProfileModal = ({ open, onClose }) => {
 
   return (
     <Modal open={open} onClose={handleCancel}>
-      <Box sx={{ width: 'auto', maxWidth: 500, padding: 2, backgroundColor: 'white', margin: 'auto', marginTop: '10px', maxHeight: '90vh', overflowY: 'auto' }}>
+      <Box sx={{ width: 'auto', maxWidth: 500, padding: 2, backgroundColor: 'white', margin: 'auto', marginTop: '50px', maxHeight: '90vh', overflowY: 'auto' }}>
       <h2 style={{ textAlign: 'center' }}>Chỉnh sửa thông tin</h2>
 
         <Grid container spacing={1}>
@@ -86,7 +93,7 @@ const EditProfileModal = ({ open, onClose }) => {
               onChange={handleChange}
               fullWidth
               margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
           <Grid item xs={6}>
@@ -97,7 +104,7 @@ const EditProfileModal = ({ open, onClose }) => {
               onChange={handleChange}
               fullWidth
               margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
 
@@ -109,7 +116,7 @@ const EditProfileModal = ({ open, onClose }) => {
               onChange={handleChange}
               fullWidth
               margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
 
@@ -121,7 +128,7 @@ const EditProfileModal = ({ open, onClose }) => {
               onChange={handleChange}
               fullWidth
               margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
 
@@ -133,7 +140,7 @@ const EditProfileModal = ({ open, onClose }) => {
               onChange={handleChange}
               fullWidth
               margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
 
@@ -147,7 +154,7 @@ const EditProfileModal = ({ open, onClose }) => {
               margin="normal"
               type="date"
               InputLabelProps={{ shrink: true }} // Đẩy label lên trên
-              sx={{ fontSize: '10px', padding: '0px' }}
+              sx={{ fontSize: '14px', padding: '0px' }}
             />
           </Grid>
 
@@ -159,38 +166,12 @@ const EditProfileModal = ({ open, onClose }) => {
                 value={formData.gender}
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
-                sx={{ fontSize: '10px', padding: '4px' }}
+                sx={{ fontSize: '14px', padding: '1.5px' }}
               >
                 <MenuItem value={0}>Nam</MenuItem>
                 <MenuItem value={1}>Nữ</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Mật khẩu cũ"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              fullWidth
-              margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Mật khẩu mới"
-              name="newPassword"
-              type="password"
-              value={formData.newPassword}
-              onChange={handleChange}
-              fullWidth
-              margin="normal"
-              sx={{ fontSize: '10px', padding: '0px' }}
-            />
           </Grid>
         </Grid>
 
