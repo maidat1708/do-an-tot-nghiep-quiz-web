@@ -7,15 +7,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   // Hàm đăng ký
-  const registerUser = async (firstname, lastname, username, email, password) => {
+  const registerUser = async (firstName, lastName, username, email, password) => {
     try {
-      console.log("Registering user with data:", { firstname, lastname, username, email, password });
+      // console.log("Registering user with data:", { firstName, lastName, username, email, password });
       const response = await fetch('http://26.184.129.66:8080/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          firstname, 
-          lastname, 
+          firstName, 
+          lastName, 
           username, 
           email, 
           password,
@@ -29,14 +29,10 @@ export const AuthProvider = ({ children }) => {
         setUser(newUser);
         return true;
       } else {
-        // const errorText = await response.text();
-        // throw new Error(`HTTP error! Status: ${response.status}. Details: ${errorText}`);
         console.error('Đăng ký thất bại');
         return false;
       }
     } catch (error) {
-      // console.error('Lỗi khi đăng ký:', error);
-      // throw error;
       return false;
     }
   };
@@ -65,34 +61,41 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Hàm đăng xuất
-  const logoutUser = async () => {
-    try {
-      // Gửi yêu cầu POST đến API để đăng xuất
-      const response = await fetch('http://26.184.129.66:8080/api/v1/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Thêm token nếu cần, ví dụ trong header Authorization
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        }
-      });
+  const logoutUser = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+  
+  // Hàm cập nhật thông tin người dùng
+  const updateUser = async (updatedInfo, newPassword = null) => {
+    const updatedUser = { ...user, profile: { ...user.profile, ...updatedInfo } };
 
-      if (response.ok) {
-        console.log('Đăng xuất thành công');
-
-        // Xóa dữ liệu người dùng và token khỏi localStorage hoặc sessionStorage
-        setUser(null);
-        localStorage.removeItem('token');
-      } else {
-        console.error('Đăng xuất thất bại');
-      }
-    } catch (error) {
-      console.error('Lỗi khi đăng xuất:', error);
+    // Nếu có mật khẩu mới, thay đổi mật khẩu
+    if (newPassword) {
+      updatedUser.password = newPassword;
     }
+
+    // Gửi thông tin cập nhật lên API (hoặc xử lý localStorage nếu không có API)
+    const apiUrl = `http://26.184.129.66:8080/api/v1/users/${user.id}`; // Thay đổi API đúng của bạn
+    fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedUser),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      setUser(data); // Cập nhật user trong context sau khi lưu thành công
+      localStorage.setItem('user', JSON.stringify(data)); // Lưu lại vào localStorage
+    })
+    .catch((error) => {
+      console.error('Error updating user data:', error);
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, registerUser, loginUser, logoutUser }}>
+    <AuthContext.Provider value={{ user, setUser, registerUser, loginUser, logoutUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

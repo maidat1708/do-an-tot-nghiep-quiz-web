@@ -7,8 +7,8 @@ import { FiEye, FiEyeOff } from 'react-icons/fi'; // Thêm icon mắt từ react
 const RegisterModal = ({ onClose, onSwitchToLogin }) => {
   const { registerUser } = useContext(AuthContext);
   const [formData, setFormData] = useState({
-    firstname: '',
-    lastname: '',
+    firstName: '',
+    lastName: '',
     username: '',
     email: '',
     password: '',
@@ -63,8 +63,8 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
     }
 
     const success = await registerUser(
-      formData.firstname,
-      formData.lastname,
+      formData.firstName,
+      formData.lastName,
       formData.username,
       formData.email,
       formData.password
@@ -93,7 +93,7 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
               type="text" 
               name="firstname" 
               placeholder="Nhập tên" 
-              value={formData.firstname} 
+              value={formData.firstName} 
               onChange={handleChange} 
               required 
             />
@@ -104,7 +104,7 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
               type="text" 
               name="lastname" 
               placeholder="Nhập họ" 
-              value={formData.lastname} 
+              value={formData.lastName} 
               onChange={handleChange} 
               required 
             />

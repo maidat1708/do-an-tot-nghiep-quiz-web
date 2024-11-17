@@ -7,6 +7,7 @@ import logo from '../assets/logo-PTIT.png'; // Đường dẫn tới logo
 import userAvatar from '../assets/user-avatar.jpg'; // Đường dẫn tới ảnh đại diện người dùng
 import { AuthContext } from '../context/AuthContext';  // Sử dụng default import
 import { toast } from 'react-toastify';
+import EditProfileModal from './EditProfileModal';
 
 const Navbar = () => {
   const { setUser } = useContext(AuthContext);  // Lấy dữ liệu từ AuthContext
@@ -14,6 +15,7 @@ const Navbar = () => {
   const [showLogin, setShowLogin] = useState(false); // Trạng thái hiển thị popup đăng nhập
   const [showRegister, setShowRegister] = useState(false); // Trạng thái hiển thị popup đăng ký
   const [anchorEl, setAnchorEl] = useState(null); // Trạng thái menu
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const navigate = useNavigate(); // Điều hướng giữa các trang
 
   const handleLoginOpen = () => {
@@ -76,6 +78,13 @@ const Navbar = () => {
     navigate('/'); // Chuyển về trang chủ sau khi đăng xuất
   };
 
+  const handleEditProfile = () => {
+    console.log('handleEditProfile called');
+    setShowEditProfile(true); 
+    console.log(showEditProfile); // Mở popup chỉnh sửa thông tin
+    handleCloseMenu();  // Đóng menu sau khi chọn "Trang cá nhân"
+  };
+
   useEffect(() => {
     setAnchorEl(null);
   }, [isLoggedIn]);
@@ -103,7 +112,7 @@ const Navbar = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleCloseMenu}
               >
-                <MenuItem onClick={handleCloseMenu}>Trang cá nhân</MenuItem>
+                <MenuItem onClick={handleEditProfile}>Trang cá nhân</MenuItem>
                 <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
               </Menu>
             </>
@@ -121,6 +130,9 @@ const Navbar = () => {
 
       {/* Popup đăng ký */}
       {showRegister && <RegisterModal onClose={handleRegisterClose} onSwitchToLogin={handleLoginOpen} />}
+      
+      {/* Popup chỉnh sửa thông tin người dùng */}
+      {showEditProfile && <EditProfileModal open={showEditProfile} onClose={() => setShowEditProfile(false)} />}
     </>
   );
 };
