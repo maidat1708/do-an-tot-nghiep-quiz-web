@@ -2,7 +2,11 @@ package com.example.samuel_quiz.service.impl;
 
 import java.util.List;
 
+import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import com.example.samuel_quiz.dto.user.UserDTO;
+import com.example.samuel_quiz.entities.Profile;
+import com.example.samuel_quiz.mapper.ProfileMapper;
+import com.example.samuel_quiz.repository.ProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +37,10 @@ public class UserService implements IUserService {
     UserRepository userRepo;
     @Autowired
     UserMapper userMapper;
+    @Autowired
+    ProfileRepository profileRepo;
+    @Autowired
+    ProfileMapper profileMapper;
     @Autowired
     PasswordEncoder passwordEncoder;
 
@@ -67,23 +75,34 @@ public class UserService implements IUserService {
         if (userRepo.existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.USER_EXISTED);
         UserDTO user = userMapper.toUser(request);
-        String roles = Role.USER.name();
-        user.setRoles(roles);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userMapper.tUserResponse(userMapper.toDto(userRepo.save(userMapper.toEntity(user))));
+        user.setRole(request.getRole());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User saveUser = userRepo.save(userMapper.toEntity(user));
+        UserDTO savedUser = userMapper.toDto(saveUser);
+        ProfileDTO profileDTO = ProfileDTO.builder()
+                .email(request.getEmail())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .build();
+        Profile saveProfile = profileMapper.toEntity(profileDTO);
+        saveProfile.setUser(saveUser);
+        savedUser.setProfile(profileMapper.toDto(profileRepo.save(saveProfile)));
+        return userMapper.tUserResponse(savedUser);
     }
 
     @Override
     @Transactional
     public UserResponse updateUser(String userId, UserUpdateRequest request) {
         User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+        Profile profile = profileRepo.findByUserId(userId)
+                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND,"Profile not found"));
+        profileMapper.toUpdateEntity(profile,request.getProfile());
+        profileRepo.save(profile);
         UserDTO userDTO = userMapper.toDto(user);
         userMapper.updateUser(userDTO, request);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (request.getRoles() != null) {
-            user.setRoles(request.getRoles());
-        }
-        return userMapper.tUserResponse(userMapper.toDto(userRepo.save(userMapper.toEntity(userDTO))));
+        User updateUser = userMapper.toEntity(userDTO);
+        updateUser.setProfile(profile);
+        return userMapper.tUserResponse(userMapper.toDto(userRepo.save(updateUser)));
     }
 
     @Override

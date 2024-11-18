@@ -1,13 +1,11 @@
 package com.example.samuel_quiz.repository;
 
+import com.example.samuel_quiz.entities.Question;
+import com.example.samuel_quiz.entities.QuestionHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.example.samuel_quiz.entities.Question;
-
-import java.util.List;
-
 @Repository
-public interface QuestionRepository extends JpaRepository<Question, Long> {
+public interface QuestionHistoryRepository extends JpaRepository<QuestionHistory, Long> {
     // Có thể thêm các phương thức query bổ sung nếu cần
 }

@@ -20,7 +20,10 @@ spring:
   # elasticsearch:
   #   host: localhost
   #   port: 9200
-  
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
 server:
   port: 8080
   servlet:

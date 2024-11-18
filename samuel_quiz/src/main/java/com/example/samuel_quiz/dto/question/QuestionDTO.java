@@ -1,8 +1,12 @@
 package com.example.samuel_quiz.dto.question;
 
+import com.example.samuel_quiz.dto.answer.AnswerDTO;
+import com.example.samuel_quiz.dto.quiz.QuizDTO;
+import com.example.samuel_quiz.dto.subject.SubjectDTO;
 import com.example.samuel_quiz.entities.Answer;
 import com.example.samuel_quiz.entities.Quiz;
 import com.example.samuel_quiz.entities.Subject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,7 +22,5 @@ public class QuestionDTO {
     Long id;
     String questionText;
     Integer level;
-    Set<Answer> answers;
-    Subject subject;
-    Set<Quiz> quizzes;
+    Set<AnswerDTO> answers;
 }

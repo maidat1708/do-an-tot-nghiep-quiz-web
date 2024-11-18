@@ -1,7 +1,5 @@
-package com.example.samuel_quiz.dto.answer;
+package com.example.samuel_quiz.dto.answerhistory;
 
-import com.example.samuel_quiz.dto.question.QuestionDTO;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,9 +8,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AnswerDTO {
+public class AnswerHistoryDTO {
     Long id;
     String answerText;
     Integer isCorrect;
+    Integer isChoose;
 }
-

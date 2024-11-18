@@ -17,11 +17,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.example.samuel_quiz.enums.Role;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-public class SecurityConfig {
+public class SecurityConfig{
 
     // private final String[] PUBLIC_ENDPOINTS = { "/users",
     // };
@@ -31,6 +34,9 @@ public class SecurityConfig {
  
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
+
+    @Autowired
+    private WebConfig webConfig;
     // accept all request
     // @Bean
     // public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws
@@ -42,10 +48,23 @@ public class SecurityConfig {
 
     // return httpSecurity.build();
     // }
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.addAllowedOrigin("*");  // Cho phép tất cả các nguồn gốc
+        corsConfiguration.addAllowedMethod("*");  // Cho phép tất cả các phương thức (GET, POST, PUT, DELETE...)
+        corsConfiguration.addAllowedHeader("*");  // Cho phép tất cả các tiêu đề
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);  // Áp dụng cho tất cả các đường dẫn
+
+        return new CorsFilter(source);
+    }
 
     // Authorization
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.addFilterBefore(corsFilter(), CorsFilter.class);
         httpSecurity
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
@@ -53,9 +72,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/products").permitAll()
                         // if use hasRole -> have to custom authority prefix ->
                         // use jwtAuthenticationConverter -> change "SCOPE_ADMIN" -> "ROLE_ADMIN"
-                        .requestMatchers(HttpMethod.GET, "/products/{productId}").hasAnyRole(Role.USER.name(),Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/products/{productId}").hasAnyRole(Role.STUDENT.name(),Role.ADMIN.name(),Role.TEACHER.name())
                         .requestMatchers("/products/**", "/users").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/comments/**").hasAnyRole(Role.USER.name(), Role.ADMIN.name())
+                        .requestMatchers("/comments/**").hasAnyRole(Role.STUDENT.name(),Role.ADMIN.name(),Role.TEACHER.name())
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable);
         // return exception if role is incorrect

@@ -19,4 +19,10 @@ public interface ProfileMapper extends BaseMapper<Profile, ProfileDTO> {
 
     @Mapping(target = "id", ignore = true) // Không update ID
     void updateProfile(@MappingTarget ProfileDTO profile, ProfileUpdateRequest request);
+
+    void updateProfileDTO(@MappingTarget ProfileDTO profile, ProfileDTO profileUpdateRequest);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    void toUpdateEntity(@MappingTarget Profile profile, ProfileDTO request);
 }

@@ -1,18 +1,23 @@
 package com.example.samuel_quiz.service.impl;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.samuel_quiz.dto.question.QuestionDTO;
 import com.example.samuel_quiz.dto.quiz.QuizDTO;
+import com.example.samuel_quiz.entities.*;
+import com.example.samuel_quiz.mapper.AnswerHistoryMapper;
+import com.example.samuel_quiz.mapper.QuesionHistoryMapper;
 import com.example.samuel_quiz.mapper.SubjectMapper;
+import com.example.samuel_quiz.repository.QuestionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.samuel_quiz.dto.quiz.request.QuizCreateRequest;
 import com.example.samuel_quiz.dto.quiz.request.QuizUpdateRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
-import com.example.samuel_quiz.entities.Quiz;
-import com.example.samuel_quiz.entities.Subject;
 import com.example.samuel_quiz.mapper.QuizMapper;
 import com.example.samuel_quiz.repository.QuizRepository;
 import com.example.samuel_quiz.repository.SubjectRepository;
@@ -34,9 +39,19 @@ public class QuizService implements IQuizService {
     SubjectRepository subjectRepo;
 
     @Autowired
-    QuizMapper quizMapper;
+    QuestionRepository questionRepo;
+
     @Autowired
-    private SubjectMapper subjectMapper;
+    QuizMapper quizMapper;
+
+    @Autowired
+    SubjectMapper subjectMapper;
+
+    @Autowired
+    QuesionHistoryMapper quesionHistoryMapper;
+
+    @Autowired
+    AnswerHistoryMapper answerHistoryMapper;
 
     @Override
     public List<QuizResponse> getQuizzes() {
@@ -60,13 +75,31 @@ public class QuizService implements IQuizService {
         Subject subject = subjectRepo.findById(request.getSubjectId())
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found with ID: " + request.getSubjectId()));
 
+        Set<Question> questions = new HashSet<>(questionRepo.findAllById(request.getQuestionIds().stream().toList()));
+        Set<QuestionHistory> questionHistories = questions.stream()
+                .map(question -> {
+                    QuestionHistory questionHistory = quesionHistoryMapper.QuestionConvertToQuestionHistory(question);
+                    questionHistory.setAnswerHistories(question.getAnswers()
+                            .stream()
+                            .map(answer -> {
+                                AnswerHistory answerHistory = answerHistoryMapper.AnswerConvertToAnswerHistory(answer);
+                                answerHistory.setQuestionHistory(questionHistory);
+                                return answerHistory;
+                            })
+                            .collect(Collectors.toSet()));
+                    // Thiết lập mối quan hệ hai chiều
+                    return questionHistory;
+                })
+                .collect(Collectors.toSet());
         // Tạo Quiz từ request và set subject
         QuizDTO quiz = quizMapper.toQuiz(request);
         quiz.setSubject(subjectMapper.toDto(subject));
 
+        Quiz savedQuiz = quizMapper.toEntity(quiz);
+        savedQuiz.setQuestionHistories(questionHistories);
+        savedQuiz.setStatus(1);
         // Lưu Quiz
-        Quiz savedQuiz = quizRepo.save(quizMapper.toEntity(quiz));
-        return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
+        return quizMapper.toQuizResponse(quizMapper.toDto(quizRepo.save(savedQuiz)));
     }
 
     @Override

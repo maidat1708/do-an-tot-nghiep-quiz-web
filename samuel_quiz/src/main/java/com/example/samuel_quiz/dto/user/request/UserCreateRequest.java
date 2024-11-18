@@ -31,5 +31,5 @@ public class UserCreateRequest {
     String email;
     String firstName;
     String lastName;
-    String rule;
+    String role;
 }

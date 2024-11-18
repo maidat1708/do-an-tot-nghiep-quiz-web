@@ -6,6 +6,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.example.samuel_quiz.dto.question.QuestionDTO;
+import com.example.samuel_quiz.exception.AppException;
+import com.example.samuel_quiz.exception.ErrorCode;
+import com.example.samuel_quiz.mapper.AnswerMapper;
+import com.example.samuel_quiz.mapper.SubjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +46,12 @@ public class QuestionService implements IQuestionService {
     @Autowired
     QuestionMapper questionMapper;
 
+    @Autowired
+    AnswerMapper answerMapper;
+
+    @Autowired
+    SubjectMapper subjectMapper;
+
     @Override
     public List<QuestionResponse> getQuestions() {
         return questionRepo.findAll().stream()
@@ -52,7 +62,7 @@ public class QuestionService implements IQuestionService {
     @Override
     public QuestionResponse getQuestion(Long questionId) {
         Question question = questionRepo.findById(questionId)
-                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Question not found"));
         return questionMapper.toQuestionResponse(questionMapper.toDto(question));
     }
 
@@ -61,36 +71,52 @@ public class QuestionService implements IQuestionService {
     public QuestionResponse createQuestion(QuestionCreateRequest request) {
         // Lấy Subject theo subjectId
         Subject subject = subjectRepo.findById(request.getSubjectId())
-                .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Subject not found"));
 
         // Tạo Question từ request và set subject
         QuestionDTO question = questionMapper.toQuestion(request);
-        question.setSubject(subject);
-
+        Question createQuestion = questionMapper.toEntity(question);
+        createQuestion.setSubject(subject);
         // Lấy danh sách các Answer theo ID
-        Set<Answer> answers = new HashSet<>(answerRepo.findAllById(request.getAnswerIds()));
-        question.setAnswers(answers);
-
+        Set<Answer> answers = request.getAnswers()
+                .stream()
+                .map(dto -> {
+                    Answer answer = answerMapper.toEntity(dto);
+                    answer.setQuestion(createQuestion);
+                    return answer;
+                })
+                .collect(Collectors.toSet());
+        createQuestion.setAnswers(answers);
         // Lưu Question
-        Question savedQuestion = questionRepo.save(questionMapper.toEntity(question));
-        return questionMapper.toQuestionResponse(questionMapper.toDto(savedQuestion));
+        return questionMapper.toQuestionResponse(questionMapper.toDto(questionRepo.save(createQuestion)));
     }
 
     @Override
     @Transactional
     public QuestionResponse updateQuestion(Long questionId, QuestionUpdateRequest request) {
         Question existingQuestion = questionRepo.findById(questionId)
-                .orElseThrow(() -> new EntityNotFoundException("Question not found"));
-        questionMapper.updateQuestion(questionMapper.toDto(existingQuestion), request);
-        Question updatedQuestion = questionRepo.save(existingQuestion);
-        return questionMapper.toQuestionResponse(questionMapper.toDto(updatedQuestion));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Question not found"));
+
+        Subject subject = subjectRepo.findById(request.getSubjectId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Subject not found"));
+        // Cập nhật question hiện tại
+        QuestionDTO existingQuestionDTO = questionMapper.toDto(existingQuestion);
+        questionMapper.updateQuestion(existingQuestionDTO, request);
+
+        Question updateQuestion = questionMapper.toEntity(existingQuestionDTO);
+        updateQuestion.setSubject(subject);
+        updateQuestion.getAnswers().forEach(answer -> {
+            answer.setQuestion(updateQuestion);
+        });
+
+        return questionMapper.toQuestionResponse(questionMapper.toDto( questionRepo.save(updateQuestion)));
     }
 
     @Override
     @Transactional
     public void deleteQuestion(Long questionId) {
         if (!questionRepo.existsById(questionId)) {
-            throw new EntityNotFoundException("Question not found");
+            throw new AppException(ErrorCode.NOT_FOUND, "Question not found");
         }
         questionRepo.deleteById(questionId);
     }

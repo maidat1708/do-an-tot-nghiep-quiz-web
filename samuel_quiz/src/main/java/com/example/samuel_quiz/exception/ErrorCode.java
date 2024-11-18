@@ -15,6 +15,7 @@ public enum ErrorCode {
     UNAUTHENTICATED(1002,"Username or password is incorrect!", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(1002,"Invalid JWT token",HttpStatus.FORBIDDEN),
     NOACCESS(1003, "Not Access",HttpStatus.FORBIDDEN),
+    BAD_REQUEST(400,"Bad Request",HttpStatus.BAD_REQUEST),
     NOT_FOUND(404, "Not Found", HttpStatus.NOT_FOUND);
 
 

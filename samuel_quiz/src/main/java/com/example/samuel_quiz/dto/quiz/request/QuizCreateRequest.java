@@ -12,6 +12,6 @@ public class QuizCreateRequest {
     Long subjectId; 
     String quizName; 
     Long totalQuestion; 
-    Long duration; 
+    Long duration; // minutes
     Set<Long> questionIds; 
 }

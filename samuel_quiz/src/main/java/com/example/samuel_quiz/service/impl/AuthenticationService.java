@@ -64,6 +64,7 @@ public class AuthenticationService implements IAuthenticationService {
         var token = generateToken(user);
 
         return AuthenticationResponse.builder()
+                .userId(user.getId())
                 .token(token)
                 .build();
     }
@@ -144,7 +145,7 @@ public class AuthenticationService implements IAuthenticationService {
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", user.getRoles())
+                .claim("scope", user.getRole())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -21,30 +22,37 @@ public class Quiz {
     String quizName;
     Long totalQuestion;
     Long duration; // thoi gian lam bai
+    Integer status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id",nullable = false)
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
     Subject subject;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
     Set<Result> result;
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
-            name = "quiz_question",
+            name = "quiz_question_history",
             joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "question_id")
+            inverseJoinColumns = @JoinColumn(name = "question_history_id")
     )
-    Set<Question> questions;
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
+    Set<QuestionHistory> questionHistories;
 
     // Thêm tiện ích để thêm và xóa question vào quiz
-    void addQuestion(Question question) {
-        this.questions.add(question);
+    void addQuestionHistory(QuestionHistory question) {
+        this.questionHistories.add(question);
         question.getQuizzes().add(this);
     }
 
-    void removeQuestion(Question question) {
-        this.questions.remove(question);
+    void removeQuestionHistory(QuestionHistory question) {
+        this.questionHistories.remove(question);
         question.getQuizzes().remove(this);
     }
 }

@@ -13,14 +13,11 @@ import com.example.samuel_quiz.entities.Answer;
 @Mapper(componentModel = "spring")
 public interface AnswerMapper extends BaseMapper<Answer, AnswerDTO> {
 
-    @Mapping(target = "question", source = "question")
     AnswerResponse toAnswerResponse(AnswerDTO answer);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "question", ignore = true)
     AnswerDTO toAnswer(AnswerCreateRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "question", ignore = true)
     void updateAnswer(@MappingTarget AnswerDTO answer, AnswerUpdateRequest request);
 }

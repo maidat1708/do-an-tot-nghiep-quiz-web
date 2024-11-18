@@ -17,7 +17,6 @@ import lombok.experimental.FieldDefaults;
 public class UserResponse {
     String id;
     String username;
-    String password;
-    String roles;
+    String role;
     ProfileDTO profile;
 }

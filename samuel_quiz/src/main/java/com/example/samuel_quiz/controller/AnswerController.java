@@ -4,13 +4,7 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.samuel_quiz.dto.answer.request.AnswerCreateRequest;
 import com.example.samuel_quiz.dto.answer.request.AnswerUpdateRequest;
@@ -18,7 +12,6 @@ import com.example.samuel_quiz.dto.answer.response.AnswerResponse;
 import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.service.IAnswerService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 

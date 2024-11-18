@@ -58,7 +58,6 @@ public class AnswerService implements IAnswerService {
         Question question = questionRepo.findById(request.getQuestionId())
                 .orElseThrow(() -> new EntityNotFoundException("Question not found"));
         AnswerDTO answer = answerMapper.toAnswer(request);
-        answer.setQuestion(questionMapper.toDto(question));
         Answer savedAnswer = answerRepo.save(answerMapper.toEntity(answer));
         return answerMapper.toAnswerResponse(answerMapper.toDto(savedAnswer));
     }

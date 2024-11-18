@@ -1,12 +1,17 @@
 package com.example.samuel_quiz.dto.profile;
 
-import lombok.AccessLevel;
-import lombok.Data;
+import com.example.samuel_quiz.dto.user.UserDTO;
+import com.example.samuel_quiz.entities.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProfileDTO {
     Long id;

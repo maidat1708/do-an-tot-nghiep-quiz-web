@@ -1,5 +1,7 @@
 package com.example.samuel_quiz.mapper;
 
+import com.example.samuel_quiz.dto.profile.ProfileDTO;
+import org.mapstruct.MappingTarget;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -13,5 +15,6 @@ public interface BaseMapper<E, D> {
     List<E> toListEntity(List<D> dtoList);
 
     List<D> toListDto(List<E> entities);
+
 }
 

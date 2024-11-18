@@ -3,6 +3,7 @@ package com.example.samuel_quiz.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.samuel_quiz.dto.subject.SubjectDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -55,8 +56,9 @@ public class SubjectService implements ISubjectService {
     public SubjectResponse updateSubject(Long subjectId, SubjectUpdateRequest request) {
         Subject existingSubject = subjectRepo.findById(subjectId)
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-        subjectMapper.updateSubject(subjectMapper.toDto(existingSubject), request);
-        Subject updatedSubject = subjectRepo.save(existingSubject);
+        SubjectDTO subjectDTO =  subjectMapper.toDto(existingSubject);
+        subjectMapper.updateSubject(subjectDTO, request);
+        Subject updatedSubject = subjectRepo.save(subjectMapper.toEntity(subjectDTO));
         return subjectMapper.toSubjectResponse(subjectMapper.toDto(updatedSubject));
     }
 

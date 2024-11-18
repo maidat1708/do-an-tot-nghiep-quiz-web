@@ -1,9 +1,11 @@
 package com.example.samuel_quiz.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -21,23 +23,25 @@ public class Question {
     Integer level;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
     Set<Answer> answers;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id", nullable = false)
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
     Subject subject;
 
-    @ManyToMany(mappedBy = "questions", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-    Set<Quiz> quizzes;
-    // Set<Quiz> quizzes = new HashSet<>();
-    
-    void addQuiz(Quiz quiz) {
-        this.quizzes.add(quiz);
-        quiz.getQuestions().add(this);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Question question)) return false;
+        return Objects.equals(id, question.id);
     }
 
-    void removeQuiz(Quiz quiz) {
-        this.quizzes.remove(quiz);
-        quiz.getQuestions().remove(this);
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 }

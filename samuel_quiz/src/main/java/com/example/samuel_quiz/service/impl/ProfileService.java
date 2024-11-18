@@ -3,6 +3,8 @@ package com.example.samuel_quiz.service.impl;
 import java.util.List;
 
 import com.example.samuel_quiz.dto.profile.ProfileDTO;
+import com.example.samuel_quiz.exception.AppException;
+import com.example.samuel_quiz.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +45,13 @@ public class ProfileService implements IProfileService {
     }
 
     @Override
+    public ProfileResponse getProfileByUserId(String userId) {
+        Profile profile = profileRepo.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
+        return profileMapper.toProfileResponse(profileMapper.toDto(profile));
+    }
+
+    @Override
     @Transactional
     public ProfileResponse createProfile(ProfileCreateRequest request) {
         ProfileDTO profile = profileMapper.toProfile(request);
@@ -55,9 +64,19 @@ public class ProfileService implements IProfileService {
     public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request) {
         Profile existingProfile = profileRepo.findById(profileId)
                 .orElseThrow(() -> new EntityNotFoundException("Profile not found"));
-        profileMapper.updateProfile(profileMapper.toDto(existingProfile), request);
-        Profile updatedProfile = profileRepo.save(existingProfile);
+        ProfileDTO profileDTO = profileMapper.toDto(existingProfile);
+        profileMapper.updateProfile(profileDTO, request);
+        Profile updatedProfile = profileRepo.save(profileMapper.toEntity(profileDTO));
         return profileMapper.toProfileResponse(profileMapper.toDto(updatedProfile));
+    }
+
+    @Override
+    public ProfileDTO updateProfileDTO(String userId, ProfileDTO request) {
+        Profile profile = profileRepo.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND,"Profile not found"));
+        profileMapper.toUpdateEntity(profile,request);
+        profileRepo.save(profile);
+        return null;
     }
 
     @Override

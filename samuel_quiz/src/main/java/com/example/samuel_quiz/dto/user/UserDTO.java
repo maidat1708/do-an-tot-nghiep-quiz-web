@@ -4,6 +4,7 @@ import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import com.example.samuel_quiz.dto.result.ResultDTO;
 import com.example.samuel_quiz.entities.Profile;
 import com.example.samuel_quiz.entities.Result;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -20,7 +21,7 @@ public class UserDTO {
     String id;
     String username;
     String password;
-    String roles;
+    String role;
     ProfileDTO profile;
     Set<ResultDTO> results;
 }

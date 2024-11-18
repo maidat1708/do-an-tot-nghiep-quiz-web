@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -23,5 +24,7 @@ public class Subject {
     Set<Quiz> quizzes;
 
     @OneToMany(mappedBy = "subject",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude // Loại bỏ khi tạo chuỗi toString (Lombok)
+    @JsonIgnore // Bỏ qua khi serialize JSON (Jackson)
     Set<Question> questions;
 }

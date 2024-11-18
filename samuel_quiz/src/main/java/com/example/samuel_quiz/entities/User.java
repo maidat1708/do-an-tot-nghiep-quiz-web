@@ -23,7 +23,7 @@ public class User {
     String id;
     String username;
     String password;
-    String roles;
+    String role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     Profile profile;

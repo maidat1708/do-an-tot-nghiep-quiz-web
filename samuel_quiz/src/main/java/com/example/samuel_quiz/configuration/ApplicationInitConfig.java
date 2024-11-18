@@ -31,12 +31,12 @@ public class ApplicationInitConfig {
                 User user = User.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
-                        .roles(roles)
+                        .role(roles)
                         .build();
 
                 userRepository.save(user);
                 log.warn("admin user has been created with default password: admin, please change it");
-                log.info(user.getRoles().toString());
+                log.info(user.getRole());
             }
         };
     }
