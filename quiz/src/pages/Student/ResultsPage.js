@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ResultsModal from '../components/ResultsModal';
+import ResultsModal from '../../components/ResultsModal';
 
 const ResultsPage = () => {
   const [history, setHistory] = useState([]);
