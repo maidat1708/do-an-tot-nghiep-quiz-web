@@ -14,4 +14,4 @@ export const useAuth = () => {
   }, []);
 
   return { isLoggedIn };
-};
+}; 

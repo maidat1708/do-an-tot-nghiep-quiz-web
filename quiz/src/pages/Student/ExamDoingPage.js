@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Typography, Box, Paper, Grid, Container, List, ListItem, ListItemText, Radio, RadioGroup, FormControlLabel, FormControl, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ResultsModal from '../components/ResultsModal'; 
+import ResultsModal from '../../components/ResultsModal'; 
 
 const questions = [
   { id: 1, section: 'Phần I', question: 'Câu hỏi 1 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },

@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import EditProfileModal from './EditProfileModal';
 
 const Navbar = () => {
-  const { setUser } = useContext(AuthContext);  // Lấy dữ liệu từ AuthContext
+  const { user, setUser } = useContext(AuthContext);  // Lấy dữ liệu từ AuthContext
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('user') !== null); // Kiểm tra trạng thái đăng nhập
   const [showLogin, setShowLogin] = useState(false); // Trạng thái hiển thị popup đăng nhập
   const [showRegister, setShowRegister] = useState(false); // Trạng thái hiển thị popup đăng ký
@@ -40,7 +40,11 @@ const Navbar = () => {
     setIsLoggedIn(true);
     setUser(JSON.parse(localStorage.getItem('user')));
     setShowLogin(false); // Đóng popup sau khi đăng nhập thành công
-    navigate('/'); // Chuyển hướng đến trang chủ
+    if (user && user.role.includes('admin')) {
+      navigate('/manage-users'); // Nếu là admin, chuyển hướng đến trang quản lý người dùng
+    } else {
+      navigate('/'); // Nếu là học sinh, chuyển hướng về trang chủ
+    }
   };
 
   const handleExamClick = () => {
@@ -89,6 +93,8 @@ const Navbar = () => {
     setAnchorEl(null);
   }, [isLoggedIn]);
 
+  const isAdmin = user && user.role && user.role.includes('ADMIN'); // Kiểm tra nếu người dùng là admin
+  
   return (
     <>
       <AppBar position="static" style={{ backgroundColor: '#d30000' }}>
@@ -98,10 +104,23 @@ const Navbar = () => {
             My Exam System
           </Typography>
           <Box sx={{ flexGrow: 1, display: 'flex', marginRight: '150px' }}>
-            <Button color="inherit" component={Link} to="/" sx={{ mx: 4 }}>Trang chủ</Button>
-            {/* Chuyển đổi thành Link để điều hướng */}
-            <Button color="inherit" onClick={handleExamClick} sx={{ mx: 4 }}>Bài thi</Button>
-            <Button color="inherit" onClick={handleResultsClick} sx={{ mx: 4 }}>Kết quả</Button>
+            {/* Hiển thị các mục navbar tùy theo quyền người dùng */}
+            { isAdmin ? (
+                <>
+                  <Button color="inherit" component={Link} to="/manage-users" sx={{ mx: 2 }}>Quản lý người dùng</Button>
+                  <Button color="inherit" component={Link} to="/manage-subjects" sx={{ mx: 2 }}>Quản lý môn học</Button>
+                  <Button color="inherit" component={Link} to="/manage-questions" sx={{ mx: 2 }}>Quản lý câu hỏi</Button>
+                  <Button color="inherit" component={Link} to="/manage-exams" sx={{ mx: 2 }}>Quản lý đề</Button>
+                  <Button color="inherit" component={Link} to="/manage-results" sx={{ mx: 2 }}>Quản lý điểm thi</Button>
+                </>
+              ) : (
+                <>
+                  <Button color="inherit" component={Link} to="/" sx={{ mx: 4 }}>Trang chủ</Button>
+                  <Button color="inherit" onClick={handleExamClick} sx={{ mx: 4 }}>Bài thi</Button>
+                  <Button color="inherit" onClick={handleResultsClick} sx={{ mx: 4 }}>Kết quả</Button>
+                </>
+              )
+            }
           </Box>
 
           {isLoggedIn ? (

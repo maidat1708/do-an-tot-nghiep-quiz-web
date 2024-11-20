@@ -91,7 +91,7 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
             <label>Firstname *</label>
             <input 
               type="text" 
-              name="firstname" 
+              name="firstName" 
               placeholder="Nhập tên" 
               value={formData.firstName} 
               onChange={handleChange} 
@@ -102,7 +102,7 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
             <label>Lastname *</label>
             <input 
               type="text" 
-              name="lastname" 
+              name="lastName" 
               placeholder="Nhập họ" 
               value={formData.lastName} 
               onChange={handleChange} 
