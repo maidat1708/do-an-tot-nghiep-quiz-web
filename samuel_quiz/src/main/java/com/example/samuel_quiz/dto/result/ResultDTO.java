@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -19,6 +20,8 @@ public class ResultDTO {
     Long correctAnswer;
     Long examDuration;
     LocalDateTime timeStart;
+    LocalDateTime timeEnd;
+    Set<ResultDetailDTO> resultDetails;
     QuizDTO quiz;
     UserDTO user;
 }

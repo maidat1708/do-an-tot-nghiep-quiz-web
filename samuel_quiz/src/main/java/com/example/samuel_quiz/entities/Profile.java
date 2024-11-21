@@ -28,5 +28,7 @@ public class Profile {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude
     User user;
 }

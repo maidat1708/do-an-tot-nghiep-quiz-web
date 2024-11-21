@@ -2,11 +2,7 @@ package com.example.samuel_quiz.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Set;
@@ -26,8 +22,12 @@ public class User {
     String role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude  // Thêm annotation này
     Profile profile;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude  // Thêm annotation này
     Set<Result> results;
 }
