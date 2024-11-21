@@ -1,12 +1,15 @@
 package com.example.samuel_quiz.service.impl;
 
+import com.example.samuel_quiz.dto.result.ResultDTO;
 import com.example.samuel_quiz.dto.result.request.ResultCreateRequest;
 import com.example.samuel_quiz.dto.result.request.ResultUpdateRequest;
 import com.example.samuel_quiz.dto.result.response.ResultResponse;
 import com.example.samuel_quiz.entities.Result;
 import com.example.samuel_quiz.entities.User;
 import com.example.samuel_quiz.entities.Quiz;
+import com.example.samuel_quiz.mapper.QuizMapper;
 import com.example.samuel_quiz.mapper.ResultMapper;
+import com.example.samuel_quiz.mapper.UserMapper;
 import com.example.samuel_quiz.repository.ResultRepository;
 import com.example.samuel_quiz.repository.UserRepository;
 import com.example.samuel_quiz.repository.QuizRepository;
@@ -29,13 +32,19 @@ public class ResultService implements IResultService {
     ResultRepository resultRepo;
 
     @Autowired
+    ResultMapper resultMapper;
+
+    @Autowired
+    UserMapper userMapper;
+
+    @Autowired
+    QuizMapper quizMapper;
+
+    @Autowired
     UserRepository userRepo;
 
     @Autowired
     QuizRepository quizRepo;
-
-    @Autowired
-    ResultMapper resultMapper;
 
     @Override
     public List<ResultResponse> getResults() {
@@ -54,16 +63,19 @@ public class ResultService implements IResultService {
     @Override
     @Transactional
     public ResultResponse createResult(ResultCreateRequest request) {
+        ResultDTO resultDTO = resultMapper.toDtoCreateRequest(request);
+
         User user = userRepo.findById(request.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + request.getUserId()));
         Quiz quiz = quizRepo.findById(request.getQuizId())
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found with ID: " + request.getQuizId()));
 
-        Result result = resultMapper.toEntity(resultMapper.toResult(request));
-        result.setUser(user);
-        result.setQuiz(quiz);
+        resultDTO.setUser(userMapper.toDto(user));
+        resultDTO.setQuiz(quizMapper.toDto(quiz));
 
+        Result result = resultMapper.toEntity(resultDTO);
         Result savedResult = resultRepo.save(result);
+
         return resultMapper.toResultResponse(resultMapper.toDto(savedResult));
     }
 
@@ -72,7 +84,7 @@ public class ResultService implements IResultService {
     public ResultResponse updateResult(Long resultId, ResultUpdateRequest request) {
         Result existingResult = resultRepo.findById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("Result not found"));
-        resultMapper.updateResult(resultMapper.toDto(existingResult), request);
+        resultMapper.updateResultDTO(resultMapper.toDto(existingResult), request);
 
         Result updatedResult = resultRepo.save(existingResult);
         return resultMapper.toResultResponse(resultMapper.toDto(updatedResult));

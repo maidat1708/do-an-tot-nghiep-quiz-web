@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Data
@@ -22,13 +23,23 @@ public class Result {
     Long correctAnswer;
     Long examDuration;
     LocalDateTime timeStart;
+    LocalDateTime timeEnd;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", nullable = false)
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude  // Thêm annotation này
     Quiz quiz;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude  // Thêm annotation này
     User user;
+
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude  // Thêm annotation này
+    @EqualsAndHashCode.Exclude  // Thêm annotation này
+    Set<ResultDetail> resultDetails;
 
 }
