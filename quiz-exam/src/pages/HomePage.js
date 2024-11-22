@@ -5,7 +5,7 @@ const HomePage = () => {
   return (
     <div className="home-container">
       <div className="home-content">
-        <h1>Chào mừng đến với hệ thống thi trắc nghiệm</h1>
+        <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Chào mừng đến với hệ thống thi trắc nghiệm</h1>
         <p>
         Hệ thống thi trắc nghiệm được xây dựng nhằm cung cấp một giải pháp hiện đại, 
         hiệu quả và tiện lợi cho việc quản lý và tổ chức các kỳ thi trực tuyến. 

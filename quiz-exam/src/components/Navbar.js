@@ -11,7 +11,7 @@ import EditProfileModal from './EditProfileModal';
 
 const Navbar = () => {
   const { user, setUser } = useContext(AuthContext);  // Lấy dữ liệu từ AuthContext
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('user') !== null); // Kiểm tra trạng thái đăng nhập
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Kiểm tra trạng thái đăng nhập 
   const [showLogin, setShowLogin] = useState(false); // Trạng thái hiển thị popup đăng nhập
   const [showRegister, setShowRegister] = useState(false); // Trạng thái hiển thị popup đăng ký
   const [anchorEl, setAnchorEl] = useState(null); // Trạng thái menu
@@ -40,7 +40,7 @@ const Navbar = () => {
     setIsLoggedIn(true);
     setUser(JSON.parse(localStorage.getItem('user')));
     setShowLogin(false); // Đóng popup sau khi đăng nhập thành công
-    if (user && user.role.includes('admin')) {
+    if (user && user.role('ADMIN')) {
       navigate('/manage-users'); // Nếu là admin, chuyển hướng đến trang quản lý người dùng
     } else {
       navigate('/'); // Nếu là học sinh, chuyển hướng về trang chủ
@@ -90,8 +90,8 @@ const Navbar = () => {
   };
 
   useEffect(() => {
-    setAnchorEl(null);
-  }, [isLoggedIn]);
+    setAnchorEl(null); // Chỉ để đóng menu khi trạng thái đăng nhập thay đổi
+  }, [isLoggedIn]);    
 
   const isAdmin = user && user.role && user.role.includes('ADMIN'); // Kiểm tra nếu người dùng là admin
   
