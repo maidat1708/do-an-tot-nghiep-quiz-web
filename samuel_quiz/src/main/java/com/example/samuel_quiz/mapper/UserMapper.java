@@ -14,22 +14,23 @@ import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring") // componentModel = "spring" -> create bean -> DI 
 public interface UserMapper extends BaseMapper<User, UserDTO> {
-    @Mapping(target = "role", ignore =  true) // ko map roles
-    @Mapping(target = "id", ignore =  true)
-    @Mapping(target = "results", ignore =  true)
-    @Mapping(target = "profile",ignore = true) // ánh xạ nested profile
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "results", ignore = true)
+    @Mapping(target = "profile", ignore = true)
     UserDTO toUser(UserCreateRequest request);
 
     UserResponse tUserResponse(UserDTO user);
 
-    @Mapping(target = "role", ignore =  true) // ko map roles
-    @Mapping(target = "id", ignore =  true)
-    @Mapping(target = "profile", ignore =  true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "profile", ignore = true)
     void updateUser(@MappingTarget UserDTO user, UserUpdateRequest request);
 
     @Override
     @Named("toDto")
-    @Mapping(target = "results", ignore = true)  // Ignore results để tránh vòng lặp
+    @Mapping(target = "results", ignore = true)
+    @Mapping(target = "profile", ignore = true)
     UserDTO toDto(User entity);
 
     @Override
@@ -38,16 +39,12 @@ public interface UserMapper extends BaseMapper<User, UserDTO> {
     @Mapping(target = "profile", ignore = true)
     User toEntity(UserDTO dto);
 
-    // Phương thức riêng để map khi cần results
     @Named("toDtoWithResults")
-    @Mapping(target = "results", source = "results")
     @Mapping(target = "profile", ignore = true)
     UserDTO toDtoWithResults(User entity);
 
-    // Phương thức riêng để map khi cần profile
     @Named("toDtoWithProfile")
     @Mapping(target = "results", ignore = true)
-    @Mapping(target = "profile", source = "profile")
     UserDTO toDtoWithProfile(User entity);
 
     @Mapping(target = "profile", ignore = true)

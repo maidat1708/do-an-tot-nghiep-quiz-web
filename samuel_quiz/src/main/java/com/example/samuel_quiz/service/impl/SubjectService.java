@@ -32,8 +32,8 @@ public class SubjectService implements ISubjectService {
 
     @Override
     public List<SubjectResponse> getSubjects() {
-        return subjectMapper.toListDto(subjectRepo.findAll()).stream()
-                .map(subjectMapper::toSubjectResponse)
+        return  subjectRepo.findAll().stream()
+                .map(entity ->  subjectMapper.toSubjectResponse(subjectMapper.toDto(entity)))
                 .collect(Collectors.toList());
     }
 

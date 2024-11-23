@@ -22,5 +22,6 @@ public class QuestionDTO {
     Long id;
     String questionText;
     Integer level;
+    SubjectDTO subject;
     Set<AnswerDTO> answers;
 }

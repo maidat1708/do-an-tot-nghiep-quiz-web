@@ -51,7 +51,7 @@ public class QuizService implements IQuizService {
     SubjectMapper subjectMapper;
 
     @Autowired
-    QuesionHistoryMapper quesionHistoryMapper;
+    QuestionHistoryMapper questionHistoryMapper;
 
     @Autowired
     AnswerHistoryMapper answerHistoryMapper;
@@ -105,7 +105,7 @@ public class QuizService implements IQuizService {
         Set<Question> questions = new HashSet<>(questionRepo.findAllById(request.getQuestionIds().stream().toList()));
         Set<QuestionHistory> questionHistories = questions.stream()
                 .map(question -> {
-                    QuestionHistory questionHistory = quesionHistoryMapper.QuestionConvertToQuestionHistory(question);
+                    QuestionHistory questionHistory = questionHistoryMapper.QuestionConvertToQuestionHistory(question);
                     questionHistory.setAnswerHistories(question.getAnswers()
                             .stream()
                             .map(answer -> {
@@ -162,7 +162,7 @@ public class QuizService implements IQuizService {
 
             Set<QuestionHistory> newHistories = questions.stream()
                     .map(question -> {
-                        QuestionHistory newHistory = quesionHistoryMapper.QuestionConvertToQuestionHistory(question);
+                        QuestionHistory newHistory = questionHistoryMapper.QuestionConvertToQuestionHistory(question);
                         newHistory.setAnswerHistories(question.getAnswers().stream()
                                 .map(answer -> {
                                     AnswerHistory answerHistory = answerHistoryMapper.AnswerConvertToAnswerHistory(answer);

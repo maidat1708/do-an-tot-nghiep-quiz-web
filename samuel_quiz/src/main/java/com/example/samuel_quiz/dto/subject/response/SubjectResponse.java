@@ -2,8 +2,8 @@ package com.example.samuel_quiz.dto.subject.response;
 
 import java.util.Set;
 
-import com.example.samuel_quiz.entities.Question;
-import com.example.samuel_quiz.entities.Quiz;
+import com.example.samuel_quiz.dto.question.QuestionDTO;
+import com.example.samuel_quiz.dto.quiz.QuizDTO;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -15,6 +15,6 @@ public class SubjectResponse {
     Long id; // ID của Subject
     String subjectName; // Tên Subject
     String description; // Mô tả
-    Set<Quiz> quizzes; // Danh sách các Quiz liên kết
-    Set<Question> questions; // Danh sách các câu hỏi liên kết
+    Set<QuizDTO> quizzes; // Danh sách các Quiz liên kết
+    Set<QuestionDTO> questions; // Danh sách các câu hỏi liên kết
 }

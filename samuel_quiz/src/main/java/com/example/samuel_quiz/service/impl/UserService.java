@@ -55,7 +55,7 @@ public class UserService implements IUserService {
     @Override
     public UserResponse getUser(String userId) {
         User user = userRepo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
-        return userMapper.tUserResponse(userMapper.toDto(user));
+        return userMapper.tUserResponse(userMapper.toDtoWithProfile(user));
     }
 
     @Override

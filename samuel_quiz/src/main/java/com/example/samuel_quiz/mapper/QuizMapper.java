@@ -8,24 +8,52 @@ import com.example.samuel_quiz.entities.Quiz;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface QuizMapper extends BaseMapper<Quiz, QuizDTO> {
 
-    // Chuyển đổi từ QuizDTO sang QuizResponse
-    @Mapping(target = "subject", source = "subject") // Lấy thông tin chi tiết của Subject
-    @Mapping(target = "questionHistories", source = "questionHistories") // Lấy danh sách các câu hỏi liên kết
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
     QuizResponse toQuizResponse(QuizDTO quizDTO);
 
-    // Chuyển đổi từ QuizCreateRequest sang QuizDTO
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "subject", ignore = true) // Bỏ qua Subject vì không cập nhật
-    @Mapping(target = "questionHistories", ignore = true) // Bỏ qua Questions vì sẽ xử lý riêng
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
     QuizDTO toQuiz(QuizCreateRequest request);
 
-    // Cập nhật QuizDTO từ QuizUpdateRequest
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "subject", ignore = true) // Bỏ qua Subject vì không cập nhật
-    @Mapping(target = "questionHistories", ignore = true) // Bỏ qua Questions vì sẽ xử lý riêng
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
     void updateQuiz(@MappingTarget QuizDTO quizDTO, QuizUpdateRequest request);
+
+    @Override
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
+//    @Mapping(target = "result", ignore = true)
+    QuizDTO toDto(Quiz quiz);
+
+    @Override
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
+//    @Mapping(target = "result", ignore = true)
+    Quiz toEntity(QuizDTO quizDTO);
+
+    @Named("toDtoWithSubject")
+    @Mapping(target = "questionHistories", ignore = true)
+//    @Mapping(target = "result", ignore = true)
+    QuizDTO toDtoWithSubject(Quiz entity);
+
+    @Named("toDtoWithQuestionHistories")
+    @Mapping(target = "subject", ignore = true)
+//    @Mapping(target = "result", ignore = true)
+    QuizDTO toDtoWithQuestionHistories(Quiz entity);
+
+    @Named("toDtoWithResult")
+    @Mapping(target = "subject", ignore = true)
+    @Mapping(target = "questionHistories", ignore = true)
+    QuizDTO toDtoWithResult(Quiz entity);
+
+    @Named("toDtoWithAll")
+    QuizDTO toDtoWithAll(Quiz entity);
 }

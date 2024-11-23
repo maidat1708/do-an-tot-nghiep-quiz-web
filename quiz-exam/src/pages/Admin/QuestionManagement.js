@@ -33,6 +33,7 @@ const QuestionManagement = () => {
   const [formData, setFormData] = useState({
     questionText: '',
     level: 1,
+    subjectId: '',
     answers: [
       { answerText: '', isCorrect: 0 },
       { answerText: '', isCorrect: 0 },
@@ -182,13 +183,18 @@ const QuestionManagement = () => {
       setFormData({
         questionText: question.questionText,
         level: question.level,
-        answers: question.answers
+        subjectId: question.subject.id,
+        answers: question.answers.map(answer => ({
+          answerText: answer.answerText,
+          isCorrect: answer.isCorrect
+        }))
       });
     } else {
       setSelectedQuestion(null);
       setFormData({
         questionText: '',
         level: 1,
+        subjectId: '',
         answers: [
           { answerText: '', isCorrect: 0 },
           { answerText: '', isCorrect: 0 },
@@ -206,6 +212,7 @@ const QuestionManagement = () => {
     setFormData({
       questionText: '',
       level: 1,
+      subjectId: '',
       answers: [
         { answerText: '', isCorrect: 0 },
         { answerText: '', isCorrect: 0 },
@@ -232,6 +239,7 @@ const QuestionManagement = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Câu hỏi</TableCell>
+              <TableCell>Môn học</TableCell>
               <TableCell>Cấp độ</TableCell>
               <TableCell>Đáp án A</TableCell>
               <TableCell>Đáp án B</TableCell>
@@ -245,6 +253,7 @@ const QuestionManagement = () => {
               <TableRow key={question.id}>
                 <TableCell>{question.id}</TableCell>
                 <TableCell>{question.questionText}</TableCell>
+                <TableCell>{question.subject?.subjectName}</TableCell>
                 <TableCell>{question.level}</TableCell>
                 {question.answers.map((answer, index) => (
                   <TableCell key={answer.id} sx={answer.isCorrect ? { color: 'green', fontWeight: 'bold' } : {}}>
@@ -279,6 +288,21 @@ const QuestionManagement = () => {
               onChange={(e) => setFormData({...formData, questionText: e.target.value})}
             />
             
+            <FormControl fullWidth>
+              <InputLabel>Môn học</InputLabel>
+              <Select
+                value={formData.subjectId}
+                onChange={(e) => setFormData({...formData, subjectId: e.target.value})}
+                label="Môn học"
+              >
+                {subjects.map((subject) => (
+                  <MenuItem key={subject.id} value={subject.id}>
+                    {subject.subjectName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <FormControl fullWidth>
               <InputLabel>Cấp độ</InputLabel>
               <Select
