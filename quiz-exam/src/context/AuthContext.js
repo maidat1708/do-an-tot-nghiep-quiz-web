@@ -49,14 +49,16 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const login = await response.json();
-        localStorage.setItem("token",login.result.token);
-        console.log(login)
+        localStorage.setItem("token", login.result.token);
         setLoginResponse(login);
-        return true;
-      } else {
-        console.error('Đăng nhập thất bại');
-        return false;
+        
+        // Lấy thông tin user và đợi kết quả
+        const userData = await fetchUserData(login.result.userId);
+        if (userData) {
+          return true;
+        }
       }
+      return false;
     } catch (error) {
       console.error('Lỗi khi đăng nhập:', error);
       return false;
@@ -71,33 +73,25 @@ export const AuthProvider = ({ children }) => {
   
   // Hàm lấy dữ liệu người dùng từ API để hiển thị
   const fetchUserData = async (id) => {
-  // if (!user || !user.id) {
-  //   console.error('Không tìm thấy người dùng hiện tại.');
-  //   return null;
-  // }
-  console.log(id)
-  console.log("check fect data user");
-  try {
-    const response = await fetch(`http://26.184.129.66:8080/api/v1/users/${id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`, // Thêm token nếu cần
-      },
-    });
+    try {
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/users/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
 
-    if (response.ok) {
-      const userData = await response.json();
-      setUser(userData.result)
-      return userData;
-    } else {
-      console.error('Lấy dữ liệu người dùng thất bại.');
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.result); // Cập nhật user trong context
+        return userData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu người dùng:', error);
       return null;
     }
-  } catch (error) {
-    console.error('Lỗi khi lấy dữ liệu người dùng:', error);
-    return null;
-  }
   };
 
   // Hàm cập nhật thông tin người dùng
@@ -118,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     .then((response) => response.json())
     .then((data) => {
       setUser(data); // Cập nhật user trong context sau khi lưu thành công
-      localStorage.setItem('user', JSON.stringify(data)); // Lưu lại vào localStorage
     })
     .catch((error) => {
       console.error('Error updating user data:', error);

@@ -8,15 +8,16 @@ import userAvatar from '../assets/user-avatar.jpg'; // Đường dẫn tới ả
 import { AuthContext } from '../context/AuthContext';  // Sử dụng default import
 import { toast } from 'react-toastify';
 import EditProfileModal from './EditProfileModal';
+import { useAuth } from '../hooks/useAuth';
 
 const Navbar = () => {
-  const { user, setUser } = useContext(AuthContext);  // Lấy dữ liệu từ AuthContext
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Kiểm tra trạng thái đăng nhập 
-  const [showLogin, setShowLogin] = useState(false); // Trạng thái hiển thị popup đăng nhập
-  const [showRegister, setShowRegister] = useState(false); // Trạng thái hiển thị popup đăng ký
-  const [anchorEl, setAnchorEl] = useState(null); // Trạng thái menu
+  const { user, setUser } = useContext(AuthContext);
+  const { isLoggedIn } = useAuth(); // Sử dụng hook useAuth
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const navigate = useNavigate(); // Điều hướng giữa các trang
+  const navigate = useNavigate();
 
   const handleLoginOpen = () => {
     setShowLogin(true);
@@ -37,14 +38,8 @@ const Navbar = () => {
   };
 
   const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setUser(JSON.parse(localStorage.getItem('user')));
-    setShowLogin(false); // Đóng popup sau khi đăng nhập thành công
-    if (user && user.role('ADMIN')) {
-      navigate('/manage-users'); // Nếu là admin, chuyển hướng đến trang quản lý người dùng
-    } else {
-      navigate('/'); // Nếu là học sinh, chuyển hướng về trang chủ
-    }
+    setShowLogin(false);
+    // Không cần setIsLoggedIn vì đã có useAuth
   };
 
   const handleExamClick = () => {
@@ -75,11 +70,11 @@ const Navbar = () => {
 
   // Xử lý khi đăng xuất
   const handleLogout = () => {
-    // localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUser(null); // Xoá thông tin user trong context
+    localStorage.removeItem('token');
+    setUser(null);
     toast.success('Đã đăng xuất thành công');
-    navigate('/'); // Chuyển về trang chủ sau khi đăng xuất
+    navigate('/');
+    handleCloseMenu();
   };
 
   const handleEditProfile = () => {
@@ -93,8 +88,9 @@ const Navbar = () => {
     setAnchorEl(null); // Chỉ để đóng menu khi trạng thái đăng nhập thay đổi
   }, [isLoggedIn]);    
 
-  const isAdmin = user && user.role && user.role.includes('ADMIN'); // Kiểm tra nếu người dùng là admin
-  
+  // Kiểm tra role ADMIN
+  const isAdmin = user && user.role === 'ADMIN';
+
   return (
     <>
       <AppBar position="static" style={{ backgroundColor: '#d30000' }}>
@@ -104,8 +100,8 @@ const Navbar = () => {
             My Exam System
           </Typography>
           <Box sx={{ flexGrow: 1, display: 'flex', marginRight: '150px' }}>
-            {/* Hiển thị các mục navbar tùy theo quyền người dùng */}
-            { isAdmin ? (
+            {isLoggedIn && user ? (
+              isAdmin ? (
                 <>
                   <Button color="inherit" component={Link} to="/manage-users" sx={{ mx: 2 }}>Quản lý người dùng</Button>
                   <Button color="inherit" component={Link} to="/manage-subjects" sx={{ mx: 2 }}>Quản lý môn học</Button>
@@ -116,16 +112,18 @@ const Navbar = () => {
               ) : (
                 <>
                   <Button color="inherit" component={Link} to="/" sx={{ mx: 4 }}>Trang chủ</Button>
-                  <Button color="inherit" onClick={handleExamClick} sx={{ mx: 4 }}>Bài thi</Button>
-                  <Button color="inherit" onClick={handleResultsClick} sx={{ mx: 4 }}>Kết quả</Button>
+                  <Button color="inherit" component={Link} to="/exam" sx={{ mx: 4 }}>Bài thi</Button>
+                  <Button color="inherit" component={Link} to="/results" sx={{ mx: 4 }}>Kết quả</Button>
                 </>
               )
-            }
+            ) : (
+              <Button color="inherit" component={Link} to="/" sx={{ mx: 4 }}>Trang chủ</Button>
+            )}
           </Box>
 
-          {isLoggedIn ? (
+          {isLoggedIn && user ? (
             <>
-              <Avatar alt="User Avatar" src={userAvatar} style={{ marginLeft: '10px' }} onClick={handleAvatarClick} />
+              <Avatar alt="User Avatar" src={userAvatar} style={{ marginLeft: '10px', cursor: 'pointer' }} onClick={handleAvatarClick} />
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}

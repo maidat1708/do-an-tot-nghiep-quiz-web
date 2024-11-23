@@ -83,7 +83,13 @@ public class QuizService implements IQuizService {
     @Override
     public List<QuizResponse> getQuizzes() {
         return quizRepo.findAll().stream()
-                .map(quiz -> quizMapper.toQuizResponse(quizMapper.toDto(quiz))) // Ánh xạ từ Quiz Entity -> QuizDTO -> QuizResponse
+                .map(quiz -> {
+                        QuizResponse quizResponse = quizMapper.toQuizResponse(quizMapper.toDto(quiz));
+                        quizResponse.setSubject(subjectMapper.toDto(quiz.getSubject()));
+                        quizResponse.setQuestionHistories(new HashSet<>(questionHistoryMapper.toListDto(quiz.getQuestionHistories().stream().toList())));
+                        return quizResponse;
+                    }
+                ) // Ánh xạ từ Quiz Entity -> QuizDTO -> QuizResponse
                 .collect(Collectors.toList());
     }
 
@@ -92,7 +98,10 @@ public class QuizService implements IQuizService {
         Quiz quiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
         QuizDTO quizDTO = quizMapper.toDto(quiz);
-        return quizMapper.toQuizResponse(quizDTO);
+        QuizResponse quizResponse = quizMapper.toQuizResponse(quizDTO);
+        quizResponse.setSubject(subjectMapper.toDto(quiz.getSubject()));
+        quizResponse.setQuestionHistories(new HashSet<>(questionHistoryMapper.toListDto(quiz.getQuestionHistories().stream().toList())));
+        return quizResponse;
     }
 
     @Override

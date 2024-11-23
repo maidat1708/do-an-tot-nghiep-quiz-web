@@ -46,9 +46,8 @@ public class UserService implements IUserService {
 
     @Override
     public List<UserResponse> getUsers() {
-        List<UserDTO> listUser = userMapper.toListDto(userRepo.findAll());
-        return listUser.stream()
-                .map(userMapper::tUserResponse)
+        return userRepo.findAll().stream()
+                .map(user ->userMapper.tUserResponse(userMapper.toDtoWithProfile(user)))
                 .toList();
     }
 

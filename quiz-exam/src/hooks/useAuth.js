@@ -1,20 +1,21 @@
 // hooks/useAuth.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 export const useAuth = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(null); // Lưu vai trò của người dùng
+  const { user } = useContext(AuthContext); // Lấy user từ AuthContext
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
+    // Kiểm tra token và user từ context
+    const token = localStorage.getItem('token');
+    
+    if (token && user) {
       setIsLoggedIn(true);
-      setRole(user.role); // Lấy vai trò từ thông tin người dùng
     } else {
       setIsLoggedIn(false);
-      setRole(null);
     }
-  }, []);
+  }, [user]); // Dependency array thêm user để useEffect chạy lại khi user thay đổi
 
-  return { isLoggedIn, role };
+  return { isLoggedIn, user };
 }; 

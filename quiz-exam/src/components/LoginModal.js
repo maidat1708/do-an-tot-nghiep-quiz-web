@@ -26,7 +26,6 @@ const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
     const success = await loginUser(username, password);
 
     if (success) {
-      setUser({ username, password }); // Cập nhật user vào context khi đăng nhập thành công
       onSuccess(); // Gọi hàm khi đăng nhập thành công
       toast.success('Đăng nhập thành công!');
       setError('');
@@ -65,7 +64,6 @@ const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
                 required 
               />
               <span 
-                className="eye-icon" 
                 onClick={() => setShowPassword(!showPassword)}
                 style={{position: 'absolute',right: '10px',top: '50%',transform: 'translateY(-50%)',cursor: 'pointer',}}
               >
