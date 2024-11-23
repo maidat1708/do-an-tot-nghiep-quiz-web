@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import './ModalStyles.css'; // Dùng cùng một CSS
+import '../styles/ModalStyles.css';  // Dùng cùng một CSS
 import { toast } from 'react-toastify';
 import { AuthContext } from '../context/AuthContext'; 
 import { FiEye, FiEyeOff } from 'react-icons/fi'; // Thêm icon mắt từ react-icons
@@ -131,41 +131,52 @@ const RegisterModal = ({ onClose, onSwitchToLogin }) => {
               required 
             />
           </div>
-          <div className="form-group password-wrapper">
+          <div className="form-group password-wrapper" style={{ position: 'relative' }}>
             <label>Password *</label>
-            <input 
-              type={showPassword ? 'text' : 'password'} 
-              name="password" 
-              placeholder="Nhập mật khẩu" 
-              value={formData.password} 
-              onChange={handleChange} 
-              required 
-            />
-            <span 
-              className="eye-icon" 
-              onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </span>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                name="password" 
+                placeholder="Nhập mật khẩu" 
+                value={formData.password} 
+                onChange={handleChange} 
+                required 
+              />
+              <span 
+                className="eye-icon" 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{position: 'absolute',right: '10px',top: '50%',transform: 'translateY(-50%)',cursor: 'pointer',}}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </span>
+            </div>
             {/* Hiển thị các lỗi liên quan đến mật khẩu */}
-            {errors.passwordLength && <p style={{ color: 'red' }}>{errors.passwordLength}</p>}
-            {errors.passwordUppercase && <p style={{ color: 'red' }}>{errors.passwordUppercase}</p>}
-            {errors.passwordSpecialChar && <p style={{ color: 'red' }}>{errors.passwordSpecialChar}</p>}
+            <div>
+              {errors.passwordLength && <p style={{ color: 'red' }}>{errors.passwordLength}</p>}
+              {errors.passwordUppercase && <p style={{ color: 'red' }}>{errors.passwordUppercase}</p>}
+              {errors.passwordSpecialChar && <p style={{ color: 'red' }}>{errors.passwordSpecialChar}</p>}
+            </div>
           </div>
-          <div className="form-group password-wrapper">
+          <div className="form-group password-wrapper" style={{ position: 'relative' }}>
             <label>Confirm password *</label>
-            <input 
-              type={showConfirmPassword ? 'text' : 'password'} 
-              name="confirmPassword" 
-              placeholder="Xác nhận mật khẩu" 
-              value={formData.confirmPassword} 
-              onChange={handleChange} 
-              required 
-            />
-            <span 
-              className="eye-icon" 
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-              {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-            </span>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showConfirmPassword ? 'text' : 'password'} 
+                name="confirmPassword" 
+                placeholder="Xác nhận mật khẩu" 
+                value={formData.confirmPassword} 
+                onChange={handleChange} 
+                required 
+              />
+              <span 
+                className="eye-icon" 
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{position: 'absolute',right: '10px',top: '50%',transform: 'translateY(-50%)',cursor: 'pointer',}}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </span>
+            </div>
+            
             {/* Hiển thị lỗi mật khẩu không khớp */}
             {errors.passwordMatch && <p style={{ color: 'red' }}>{errors.passwordMatch}</p>}
           </div>

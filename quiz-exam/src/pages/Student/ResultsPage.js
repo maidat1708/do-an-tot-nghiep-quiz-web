@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import ResultsModal from '../../components/ResultsModal';
+import React, { useState, useEffect } from "react";
+import ResultsModal from "../../components/ResultsModal";
 
 const ResultsPage = () => {
   const [history, setHistory] = useState([]);
@@ -8,38 +8,64 @@ const ResultsPage = () => {
 
   // Giả lập dữ liệu lịch sử thi từ localStorage hoặc API
   useEffect(() => {
-    const storedHistory = JSON.parse(localStorage.getItem('examHistory')) || [];
+    const storedHistory = JSON.parse(localStorage.getItem("examHistory")) || [];
     setHistory(storedHistory);
   }, []);
 
-  // Mở popup với kết quả của bài thi đã chọn
+  // Mở popup với kết quả chi tiết của bài thi đã chọn
   const handleExamClick = (examResult) => {
     setSelectedResult(examResult);
     setShowPopup(true);
   };
 
   return (
-    <div className="history-page">
-      <h1>Lịch sử kết quả thi</h1>
-      <div className="history-list">
-        {history.length === 0 ? (
-          <p>Không có lịch sử thi.</p>
-        ) : (
-          history.map((examResult, index) => (
-            <div key={index} className="history-item" onClick={() => handleExamClick(examResult)}>
-              <div className="exam-title">{examResult.quizName}</div>
-              <div className="exam-date">{examResult.timeStart}</div>
-              <div className="exam-score">Điểm: {examResult.score}</div>
-              {/* <p><strong>{examResult.quizName}</strong></p>
-              <p>Điểm: {examResult.score}</p>
-              <p>Thời gian bắt đầu: {examResult.timeStart}</p> */}
-            </div>
-          ))
-        )}
-      </div>
+    <div style={{ padding: "20px" }}>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>
+        Lịch sử kết quả thi
+      </h1>
 
+      {history.length === 0 ? (
+        <p style={{ textAlign: "center" }}>Không có lịch sử thi.</p>
+      ) : (
+        <table
+          border="1"
+          style={{
+            width: "90%",
+            margin: "auto",
+            textAlign: "center",
+            justifyContent: "center",
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tên bài thi</th>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Thời gian bắt đầu</th>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Điểm</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((examResult, index) => (
+              <tr key={index}>
+                <td
+                  style={{ border: "1px solid #ddd", padding: "8px", cursor: "pointer", color: "#007BFF", textDecoration: "underline", }}
+                  onClick={() => handleExamClick(examResult)}
+                >
+                  {examResult.quizName}
+                </td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{examResult.timeStart}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{examResult.score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Modal hiển thị kết quả chi tiết */}
       {showPopup && selectedResult && (
-        <ResultsModal examResult={selectedResult} onClose={() => setShowPopup(false)} />
+        <ResultsModal
+          examResult={selectedResult}
+          onClose={() => setShowPopup(false)}
+        />
       )}
     </div>
   );

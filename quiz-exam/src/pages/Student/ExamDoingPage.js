@@ -1,18 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Typography, Box, Paper, Grid, Container, List, ListItem, ListItemText, Radio, RadioGroup, FormControlLabel, FormControl, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import ResultsModal from '../../components/ResultsModal'; 
 
 const questions = [
-  { id: 1, section: 'Phần I', question: 'Câu hỏi 1 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 2, section: 'Phần I', question: 'Câu hỏi 2 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 3, section: 'Phần II', question: 'Câu hỏi 3 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 1, question: 'Câu hỏi 1 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 2, question: 'Câu hỏi 2 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 3, question: 'Câu hỏi 3 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 4, question: 'Câu hỏi 4 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 5, question: 'Câu hỏi 5 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 6, question: 'Câu hỏi 6 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 7, question: 'Câu hỏi 7 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 8, question: 'Câu hỏi 8 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 9, question: 'Câu hỏi 9 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
+  { id: 10, question: 'Câu hỏi 10 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
   // Thêm các câu hỏi khác
 ];
 
 const ExamDoingPage = () => {
   const navigate = useNavigate();
-  
+  const timer = useRef(null);
+  const questionRefs = useRef([]); // Tham chiếu cho các câu hỏi để cuộn đến câu hỏi tiếp theo
+
+  const duration = 60; // Tổng thời gian bài thi (phút)
   const [answers, setAnswers] = useState({});
   const [selectedQuestion, setSelectedQuestion] = useState(questions[0]);
   const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 minutes (in seconds)
@@ -25,15 +35,29 @@ const ExamDoingPage = () => {
       alert('Hết thời gian làm bài');
       navigate('/results');
     }
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
-    }, 1000);
+    // Chỉ tạo interval nếu modal không mở
+    if (!showResultsModal) {
+      timer.current = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    }
 
-    return () => clearInterval(timer); // Dọn dẹp interval khi component bị unmount
-  }, [timeLeft, navigate]);
+    return () => {
+      // Clear interval when component unmounts or when modal is opened
+      if (timer.current) {
+        clearInterval(timer.current);
+      }
+    };
+  }, [timeLeft, navigate, showResultsModal]);
 
-  const handleSelectQuestion = (question) => {
+  const handleSelectQuestion = (questionId) => {
+    const question = questions.find((q) => q.id === questionId);
     setSelectedQuestion(question);
+    // Cuộn đến câu hỏi khi người dùng chọn câu hỏi
+    questionRefs.current[questionId - 1]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   };
 
   const handleAnswerChange = (questionId, answer) => {
@@ -45,17 +69,24 @@ const ExamDoingPage = () => {
     navigate('/exam');
   };
 
-  const handleSubmitExam = () => {
+  const handleSubmit = () => {
     setOpenDialog(true); // Mở popup xác nhận nộp bài
   };
 
-  const handleConfirmSubmit = () => {
+  const formatExamDuration = (examDuration) => {
+    const minutes = Math.floor(examDuration); // Lấy phần nguyên là phút
+    const seconds = Math.round((examDuration - minutes) * 60); // Phần dư là giây
+    return `${minutes} phút ${seconds < 10 ? '0' : ''}${seconds} giây`;
+  };
+
+  const ConfirmSubmit = () => {
+    const formattedDuration = formatExamDuration(((duration * 60 - timeLeft) / 60).toFixed(2)); // Chuyển đổi thành phút và giây
     const examResult = {
       quizName: 'Bài thi Toán', // Tên bài thi, có thể lấy từ API hoặc trang hiện tại
       score: calculateScore(), // Hàm tính điểm (ví dụ)
       totalQuestion: questions.length,
       correctAnswer: calculateCorrectAnswers(), // Hàm tính số câu đúng
-      examDuration: 60, // Thời gian làm bài (tính bằng phút)
+      examDuration: formattedDuration, 
       timeStart: new Date().toLocaleString(), // Thời gian bắt đầu
     };
 
@@ -68,6 +99,7 @@ const ExamDoingPage = () => {
     setExamResult(examResult);
     setShowResultsModal(true);
     setOpenDialog(false); // Đóng dialog xác nhận nộp bài
+    if (timer.current) clearInterval(timer.current); // Dừng đếm thời gian khi nộp bài
     console.log('Đã nộp bài thi, câu trả lời:', answers);
   };
 
@@ -88,13 +120,34 @@ const ExamDoingPage = () => {
   };
 
   const calculateScore = () => {
-    // Hàm tính điểm số (Ví dụ: điểm số là số câu trả lời đúng)
-    return Object.values(answers).filter(answer => answer === 'B').length;
+    return (calculateCorrectAnswers() / questions.length) * 10;
   };
 
   const calculateCorrectAnswers = () => {
     // Hàm tính số câu trả lời đúng
     return Object.values(answers).filter(answer => answer === 'B').length;
+  };
+
+  const handleBack = () => {
+    const currentIndex = questions.findIndex(q => q.id === selectedQuestion.id);
+    if (currentIndex > 0) {
+      setSelectedQuestion(questions[currentIndex - 1]);
+      questionRefs.current[currentIndex - 1]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
+
+  const handleNext = () => {
+    const currentIndex = questions.findIndex(q => q.id === selectedQuestion.id);
+    if (currentIndex < questions.length - 1) {
+      setSelectedQuestion(questions[currentIndex + 1]);
+      questionRefs.current[currentIndex + 1]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
   };
 
   return (
@@ -130,53 +183,56 @@ const ExamDoingPage = () => {
                   ))}
                 </RadioGroup>
               </FormControl>
+              {/* Nút Back và Next */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                <Button variant="contained" color="primary" disabled={selectedQuestion.id === 1} onClick={handleBack}>
+                  &lt; Quay lại
+                </Button>
+                <Button variant="contained" color="primary" disabled={selectedQuestion.id === questions.length} onClick={handleNext}>
+                  Tiếp theo &gt;
+                </Button>
+              </Box>
             </Paper>
 
             {/* Nút Tạm dừng và Nộp bài */}
             <Box sx={{ textAlign: 'center', marginTop: 2 }}>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handlePauseExam}
-                sx={{ marginRight: 2 }}
-              >
+              <Button variant="contained" color="error" onClick={handlePauseExam}sx={{ marginRight: 2 }}>
                 Tạm dừng
               </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmitExam}
-                sx={{ marginRight: 2 }}
-              >
+              <Button variant="contained" color="success" onClick={handleSubmit} sx={{ marginRight: 2 }}>
                 Nộp bài
               </Button>
             </Box>
           </Grid>
 
           {/* Phần danh sách câu hỏi */}
-          <Grid item xs={3}>
-            <Typography variant="h6" gutterBottom>
-              Danh sách câu hỏi
-            </Typography>
-            <List>
-              {questions.map((question) => (
-                <ListItem
-                  key={question.id}
-                  button
-                  selected={selectedQuestion.id === question.id}
-                  onClick={() => handleSelectQuestion(question)}
-                  sx={{ backgroundColor: selectedQuestion.id === question.id ? '#dde' : 'transparent', marginBottom: 1 }}
-                >
-                  <ListItemText primary={`Câu ${question.id}`} />
-                  {/* Hiển thị dấu tích khi câu hỏi đã được chọn đáp án */}
-                  {answers[question.id] && (
-                    <Typography variant="body2" color="green" sx={{ fontWeight: 'bold', marginLeft: '8px' }}>
-                      ✔
-                    </Typography>
-                  )}
-                </ListItem>
-              ))}
-            </List>
+          <Grid item xs={3} sx={{ height: '500px', overflowY: 'auto' }}>
+            <Paper sx={{ padding: 1 }}>
+              <Typography variant="h5" gutterBottom>
+                Danh sách câu hỏi
+              </Typography>
+                <Box sx={{ maxHeight: '100%', overflowY: 'auto' }}>
+                  <List>
+                    {questions.map((question, index) => (
+                      <ListItem
+                        key={question.id}
+                        button
+                        onClick={() => handleSelectQuestion(question.id)}
+                        ref={(el) => questionRefs.current[index] = el}
+                        sx={{ backgroundColor: selectedQuestion.id === question.id ? '#dde' : 'transparent', marginBottom: 1 }}
+                      >
+                        <ListItemText primary={`Câu ${question.id}`} />
+                        {/* Hiển thị dấu tích khi câu hỏi đã được chọn đáp án */}
+                        {answers[question.id] && (
+                          <Typography variant="body2" color="green" sx={{ fontWeight: 'bold', marginLeft: '8px' }}>
+                            ✔
+                          </Typography>
+                        )}
+                      </ListItem>
+                    ))}
+                  </List>
+              </Box>
+            </Paper>
           </Grid>
         </Grid>
       </Container>
@@ -193,7 +249,7 @@ const ExamDoingPage = () => {
           <Button onClick={handleCloseDialog} color="primary">
             Hủy
           </Button>
-          <Button onClick={handleConfirmSubmit} color="success">
+          <Button onClick={ConfirmSubmit} color="success">
             Đồng ý
           </Button>
         </DialogActions>

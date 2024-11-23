@@ -1,7 +1,8 @@
 import React, { useState, useContext } from 'react';
-import './ModalStyles.css'; // Import CSS để thiết kế popup
+import '../styles/ModalStyles.css'; // Import CSS để thiết kế popup
 import { toast } from 'react-toastify';
 import { AuthContext } from '../context/AuthContext';
+import { FiEye, FiEyeOff } from 'react-icons/fi'; // Thêm icon mắt từ react-icons
 
 const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
   const { loginUser, setUser } = useContext(AuthContext);
@@ -10,6 +11,7 @@ const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
     password: '',
   });
 
+  const [showPassword, setShowPassword] = useState(false); // Quản lý trạng thái hiển thị mật khẩu
   const [error, setError] = useState(''); // Lưu trữ thông báo lỗi
 
   const handleChange = (e) => {
@@ -51,16 +53,25 @@ const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
               required 
             />
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ position: 'relative' }}>
             <label>Password *</label>
-            <input 
-              type="password" 
-              name="password" 
-              placeholder="Nhập mật khẩu" 
-              value={formData.password} 
-              onChange={handleChange} 
-              required 
-            />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                name="password" 
+                placeholder="Nhập mật khẩu" 
+                value={formData.password} 
+                onChange={handleChange} 
+                required 
+              />
+              <span 
+                className="eye-icon" 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{position: 'absolute',right: '10px',top: '50%',transform: 'translateY(-50%)',cursor: 'pointer',}}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </span>
+            </div>
           </div>
           
           {error && <p style={{ color: 'red' }}>{error}</p>} {/* Hiển thị lỗi nếu có */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import './ModalStyles.css'; // Import file CSS
+import '../styles/ModalStyles.css'; ; // Import file CSS
 
 const ResultsModal = ({ examResult, onClose }) => {
   return (
@@ -18,7 +18,7 @@ const ResultsModal = ({ examResult, onClose }) => {
           <strong>Số câu trả lời đúng:</strong> {examResult.correctAnswer}
         </div>
         <div className="result-item">
-          <strong>Thời gian làm bài:</strong> {examResult.examDuration} phút
+          <strong>Thời gian làm bài:</strong> {examResult.examDuration} 
         </div>
         <div className="result-item">
           <strong>Thời gian bắt đầu:</strong> {examResult.timeStart}

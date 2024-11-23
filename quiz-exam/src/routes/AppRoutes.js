@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import HomePage from '../pages/HomePage';  // Trang chủ
 import ExamPage from '../pages/Student/ExamPage';  // Trang bài thi
 import ExamDoingPage from '../pages/Student/ExamDoingPage';
@@ -8,10 +8,22 @@ import UserManagementPage from '../pages/Admin/UserManagement';
 import SubjectManagementPage from '../pages/Admin/SubjectManagement';
 import QuestionManagementPage from '../pages/Admin/QuestionManagement';
 import ExamManagementPage from '../pages/Admin/ExamManagement';
+import ResultsManagementPage from '../pages/Admin/ResultsManagement';
 import { useAuth } from '../hooks/useAuth'; // Giả sử đây là hook để kiểm tra trạng thái đăng nhập
 
 const AppRoutes = () => {
-  const { isLoggedIn } = useAuth(); // Sử dụng hook để kiểm tra trạng thái đăng nhập
+  const { isLoggedIn, role } = useAuth(); // Sử dụng hook để kiểm tra trạng thái đăng nhập
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      if (role === 'ADMIN') {
+        navigate('/manage-users'); // Điều hướng đến trang admin mặc định
+      } else if (role === 'STUDENT') {
+        navigate('/'); // Điều hướng đến trang home cho student
+      }
+    }
+  }, [isLoggedIn, role, navigate]);
 
   return (
     <Routes>
@@ -48,6 +60,10 @@ const AppRoutes = () => {
       <Route
         path="/manage-exams" 
         element={isLoggedIn ? <ExamManagementPage /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/manage-results" 
+        element={isLoggedIn ? <ResultsManagementPage /> : <Navigate to="/login" replace />}
       />
 
       {/* Điều hướng về trang chủ nếu đường dẫn không tồn tại */}
