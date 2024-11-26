@@ -35,8 +35,6 @@ const EditProfileModal = ({ open, onClose }) => {
           address: userData.result.profile.address || '',
           birthDay: userData.result.profile.birthDay || '',
           gender: userData.result.profile.gender || 0,
-          password: '',
-          newPassword: '',
         });
       }
     }
@@ -52,7 +50,6 @@ const EditProfileModal = ({ open, onClose }) => {
   };
 
   const handleSave = () => {
-    const { password, newPassword } = formData;
     const updatedInfo = {
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -62,10 +59,7 @@ const EditProfileModal = ({ open, onClose }) => {
       birthDay: formData.birthDay,
       gender: formData.gender,
     };
-
-    // Nếu có thay đổi mật khẩu, thêm mật khẩu mới vào thông tin cập nhật
-    const passwordUpdate = newPassword ? newPassword : password;
-
+    
     // Gọi updateUser từ context để cập nhật thông tin người dùng
     updateUser(updatedInfo,loginResponse.result.userId);
 

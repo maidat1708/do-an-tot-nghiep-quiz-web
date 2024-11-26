@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {Box,Button,Paper,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,IconButton,Dialog,DialogTitle,DialogContent,DialogActions,TextField,Select,MenuItem,FormControl,InputLabel,FormControlLabel,Radio,} from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { toast } from 'react-toastify';
+import {
+  Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, 
+  DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, FormControlLabel, Radio, Typography
+} from '@mui/material';
+// import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const QuestionManagement = () => {
   const [questions, setQuestions] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(subjects.length > 0 ? subjects[0].id : null);
   const [formData, setFormData] = useState({
     questionText: '',
     level: 1,
@@ -19,6 +23,13 @@ const QuestionManagement = () => {
       { answerText: '', isCorrect: 0 }
     ]
   });
+
+  // Nếu danh sách subjects thay đổi, tự động chọn môn đầu tiên
+  useEffect(() => {
+    if (subjects.length > 0) {
+      setSelectedSubjectId(subjects[0].id);
+    }
+  }, [subjects]);
 
   // Fetch questions và subjects khi component mount
   useEffect(() => {
@@ -200,131 +211,212 @@ const QuestionManagement = () => {
     });
   };
 
+  const filteredQuestions = selectedSubjectId
+    ? questions.filter((q) => q.subject.id === selectedSubjectId)
+    : questions;
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={() => handleOpen()}
-        sx={{ mb: 2 }}
-      >
-        Thêm câu hỏi mới
-      </Button>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Câu hỏi</TableCell>
-              <TableCell>Môn học</TableCell>
-              <TableCell>Cấp độ</TableCell>
-              <TableCell>Đáp án A</TableCell>
-              <TableCell>Đáp án B</TableCell>
-              <TableCell>Đáp án C</TableCell>
-              <TableCell>Đáp án D</TableCell>
-              <TableCell>Thao tác</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {questions.map((question) => (
-              <TableRow key={question.id}>
-                <TableCell>{question.id}</TableCell>
-                <TableCell>{question.questionText}</TableCell>
-                <TableCell>{question.subject?.subjectName}</TableCell>
-                <TableCell>{question.level}</TableCell>
-                {question.answers.map((answer, index) => (
-                  <TableCell key={answer.id} sx={answer.isCorrect ? { color: 'green', fontWeight: 'bold' } : {}}>
-                    {answer.answerText}
-                  </TableCell>
-                ))}
-                <TableCell>
-                  <IconButton onClick={() => handleOpen(question)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(question.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <TextField
-              name="questionText"
-              label="Nội dung câu hỏi"
-              fullWidth
-              value={formData.questionText}
-              onChange={(e) => setFormData({...formData, questionText: e.target.value})}
-            />
-            
-            <FormControl fullWidth>
-              <InputLabel>Môn học</InputLabel>
-              <Select
-                value={formData.subjectId}
-                onChange={(e) => setFormData({...formData, subjectId: e.target.value})}
-                label="Môn học"
-              >
-                {subjects.map((subject) => (
-                  <MenuItem key={subject.id} value={subject.id}>
-                    {subject.subjectName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Cấp độ</InputLabel>
-              <Select
-                value={formData.level}
-                onChange={(e) => setFormData({...formData, level: e.target.value})}
-                label="Cấp độ"
-              >
-                <MenuItem value={1}>Dễ</MenuItem>
-                <MenuItem value={2}>Trung bình</MenuItem>
-                <MenuItem value={3}>Khó</MenuItem>
-              </Select>
-            </FormControl>
-
-            {formData.answers.map((answer, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <TextField
-                  label={`Đáp án ${String.fromCharCode(65 + index)}`}
-                  fullWidth
-                  value={answer.answerText}
-                  onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
-                />
-                <FormControlLabel
-                  control={
-                    <Radio
-                      checked={answer.isCorrect === 1}
-                      onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.checked ? 1 : 0)}
-                    />
-                  }
-                  label="Đáp án đúng"
-                />
-              </Box>
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Hủy</Button>
-          <Button 
-            onClick={selectedQuestion ? handleUpdate : handleAdd}
-            variant="contained"
+    <Box sx={{ display: 'flex', height: '100vh' }}>
+      {/* Sidebar */}
+      <Box
+      sx={{
+        width: '15%',
+        backgroundColor: '#fff',
+        padding: '10px',
+        borderRadius: '8px',
+        border: '1px solid #ccc',
+      }}
+      >     
+        <Box sx={{
+          backgroundColor: '#f5f5f5',
+          padding: '10px',
+          borderRadius: '4px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          marginBottom: '10px',
+        }}
+        >
+          Ngân hàng câu hỏi
+        </Box>
+        {subjects.map((subject) => (
+          <Box
+            key={subject.id}
+            sx={{
+              backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#f5f5f5', // Màu nền thay đổi khi được chọn
+              padding: '10px',
+              marginBottom: '8px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)', // Hiệu ứng bóng
+              '&:hover': {
+                backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#e0e0e0', // Hover vẫn giữ được màu nếu chọn
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)', // Hiệu ứng bóng khi hover
+              },
+            }}
+            onClick={() => setSelectedSubjectId(subject.id)}
           >
-            {selectedQuestion ? 'Cập nhật' : 'Thêm'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Typography>
+              {subject.subjectName}
+            </Typography>
+          </Box>
+        ))}
+      </Box>  
+
+      {/* Main Content */}
+      <Box sx={{ flex: 1,p: 3 }}>
+        <button
+          onClick={() => handleOpen()}
+          sx={{ mb: 2 }}
+          style={{
+            backgroundColor: '#d30000',
+            color: 'white',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '5px',
+            marginBottom: '30px',
+            cursor: 'pointer'
+          }}
+        >
+          Thêm câu hỏi mới
+        </button>
+
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow style={{background: "#F7F7F7"}}>
+                <TableCell>ID</TableCell>
+                <TableCell>Câu hỏi</TableCell>
+                <TableCell>Môn học</TableCell>
+                <TableCell>Cấp độ</TableCell>
+                <TableCell>Đáp án A</TableCell>
+                <TableCell>Đáp án B</TableCell>
+                <TableCell>Đáp án C</TableCell>
+                <TableCell>Đáp án D</TableCell>
+                <TableCell>Thao tác</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredQuestions.map((question) => (
+                <TableRow key={question.id}>
+                  <TableCell>{question.id}</TableCell>
+                  <TableCell>{question.questionText}</TableCell>
+                  <TableCell>{question.subject?.subjectName}</TableCell>
+                  <TableCell>{question.level}</TableCell>
+                  {question.answers.map((answer, index) => (
+                    <TableCell
+                      key={index}
+                      sx={answer.isCorrect ? { color: 'green', fontWeight: 'bold' } : {}}
+                    >
+                      {answer.answerText}
+                    </TableCell>
+                  ))}
+                  <TableCell>
+                    <button
+                      onClick={() => handleOpen(question)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#4CAF50", // Màu xanh
+                        marginRight: "10px",
+                      }}
+                    >
+                      <FaEdit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(question.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#f44336", // Màu đỏ
+                      }}
+                    >
+                      <FaTrash size={18} />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+          <DialogTitle>
+            {selectedQuestion ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+              <TextField
+                name="questionText"
+                label="Nội dung câu hỏi"
+                fullWidth
+                value={formData.questionText}
+                onChange={(e) => setFormData({...formData, questionText: e.target.value})}
+              />
+              
+              <FormControl fullWidth>
+                <InputLabel>Môn học</InputLabel>
+                <Select
+                  value={formData.subjectId}
+                  onChange={(e) => setFormData({...formData, subjectId: e.target.value})}
+                  label="Môn học"
+                >
+                  {subjects.map((subject) => (
+                    <MenuItem key={subject.id} value={subject.id}>
+                      {subject.subjectName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth>
+                <InputLabel>Cấp độ</InputLabel>
+                <Select
+                  value={formData.level}
+                  onChange={(e) => setFormData({...formData, level: e.target.value})}
+                  label="Cấp độ"
+                >
+                  <MenuItem value={1}>Dễ</MenuItem>
+                  <MenuItem value={2}>Trung bình</MenuItem>
+                  <MenuItem value={3}>Khó</MenuItem>
+                </Select>
+              </FormControl>
+
+              {formData.answers.map((answer, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <TextField
+                    label={`Đáp án ${String.fromCharCode(65 + index)}`}
+                    fullWidth
+                    value={answer.answerText}
+                    onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Radio
+                        checked={answer.isCorrect === 1}
+                        onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.checked ? 1 : 0)}
+                      />
+                    }
+                    label="Đáp án đúng"
+                  />
+                </Box>
+              ))}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Hủy</Button>
+            <Button 
+              onClick={selectedQuestion ? handleUpdate : handleAdd}
+              variant="contained"
+            >
+              {selectedQuestion ? 'Cập nhật' : 'Thêm'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
     </Box>
   );
 };

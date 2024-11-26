@@ -23,7 +23,7 @@ const AppRoutes = () => {
         navigate('/exam');
       }
     }
-  }, []);
+  }, [isLoggedIn, user]);
 
   // HOC để bảo vệ route admin
   const AdminRoute = ({ children }) => {

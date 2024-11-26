@@ -19,9 +19,9 @@ const questions = [
 
 const ExamDoingPage = () => {
   const navigate = useNavigate();
+  
   const timer = useRef(null);
   const questionRefs = useRef([]); // Tham chiếu cho các câu hỏi để cuộn đến câu hỏi tiếp theo
-
   const duration = 60; // Tổng thời gian bài thi (phút)
   const [answers, setAnswers] = useState({});
   const [selectedQuestion, setSelectedQuestion] = useState(questions[0]);

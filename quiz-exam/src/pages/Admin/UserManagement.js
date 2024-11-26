@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+  Paper, TextField, FormControl, Select, MenuItem, InputLabel, Grid } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "../../components/Modal";
 
@@ -6,6 +8,8 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   // Xử lý mở popup thêm mới
   const handleAdd = () => {
@@ -19,11 +23,21 @@ const UserManagement = () => {
     setModalOpen(true);
   };
 
-  // Xóa người dùng
-  const handleDelete = (index) => {
-    const updatedUsers = [...users];
-    updatedUsers.splice(index, 1);
-    setUsers(updatedUsers);
+   // Hiển thị popup xác nhận xóa
+   const confirmDelete = (index) => {
+    setUserToDelete(index);
+    setDeleteConfirmOpen(true);
+  };
+
+  // Xóa người dùng sau khi xác nhận
+  const handleDelete = () => {
+    if (userToDelete !== null) {
+      const updatedUsers = [...users];
+      updatedUsers.splice(userToDelete, 1);
+      setUsers(updatedUsers);
+    }
+    setDeleteConfirmOpen(false);
+    setUserToDelete(null);
   };
 
   // Lưu người dùng sau khi thêm/sửa
@@ -39,99 +53,117 @@ const UserManagement = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <button
-        onClick={handleAdd}
+    <Box sx={{ p: 3 }}>
+      <button 
+        onClick={() => handleAdd(true)}
+        sx={{ mb: 2 }}
         style={{
-          backgroundColor: "#d30000",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "5px",
-          marginBottom: "30px",
-          cursor: "pointer",
-        }}
-      >
+          backgroundColor: "#d30000", color: "white", padding: "10px 20px", border: "none",
+          borderRadius: "5px", marginBottom: "30px", cursor: "pointer",
+          }}
+        >
         + Thêm mới
       </button>
+
       <UserTable users={users} onEdit={handleEdit} onDelete={handleDelete} />
+      
+      {/* Modal for Add/Edit User */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         <UserForm
           initialData={editingIndex !== null ? users[editingIndex] : null}
           onSave={handleSave}
         />
       </Modal>
-    </div>
+
+      {/* Modal for Delete Confirmation */}
+      <Modal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
+        <div style={{ textAlign: "center" }}>
+          <h3>Bạn có chắc chắn muốn xóa người dùng này không?</h3>
+          <button
+            onClick={handleDelete}
+            style={{
+              backgroundColor: "#d30000",color: "white",padding: "10px 20px",margin: "10px",
+              border: "none",borderRadius: "5px",cursor: "pointer",
+            }}
+          >
+            OK
+          </button>
+          <button
+            onClick={() => setDeleteConfirmOpen(false)}
+            style={{
+              backgroundColor: "#ccc",color: "black",padding: "10px 20px",
+              margin: "10px", border: "none",borderRadius: "5px",cursor: "pointer",
+            }}
+          >
+            Hủy
+          </button>
+        </div>
+      </Modal>
+    </Box>
   );
 };
 
 // Component bảng hiển thị danh sách người dùng
 const UserTable = ({ users, onEdit, onDelete }) => {
   return (
-    <table
-      border="1"
-      style={{
-        width: "100%",
-        margin: "auto",
-        textAlign: "center",
-        justifyContent: "center",
-      }}
-    >
-      <thead>
-        <tr>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Username</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>First Name</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Last Name</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Birthday</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Gender</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Email</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Phone Number</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Address</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Role</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user, index) => (
-          <tr key={index}>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.username}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.firstName}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.lastName}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.birthDay}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.gender}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.email}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.phoneNumber}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.address}</td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>{user.role}</td>
-            <td>
-              <button
-                onClick={() => onEdit(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#4CAF50", // Màu xanh
-                  marginRight: "10px",
-                }}
-              >
-                <FaEdit size={18} />
-              </button>
-              <button
-                onClick={() => onDelete(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#f44336", // Màu đỏ
-                }}
-              >
-                <FaTrash size={18} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow style={{background: "#F7F7F7"}}>
+            <TableCell>Username</TableCell>
+            <TableCell>First Name</TableCell>
+            <TableCell>Last Name</TableCell>
+            <TableCell>Birthday</TableCell>
+            <TableCell>Gender</TableCell>
+            <TableCell>Email</TableCell>
+            <TableCell>Phone Number</TableCell>
+            <TableCell>Address</TableCell>
+            <TableCell>Role</TableCell>
+            <TableCell>Thao tác</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {users.map((user, index) => (
+            <TableRow key={index}>
+              <TableCell>{user.username}</TableCell>
+              <TableCell>{user.firstName}</TableCell>
+              <TableCell>{user.lastName}</TableCell>
+              <TableCell>{user.birthDay}</TableCell>
+              <TableCell>{user.gender}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.phoneNumber}</TableCell>
+              <TableCell>{user.address}</TableCell>
+              <TableCell>{user.role}</TableCell>
+              <TableCell>
+                <button
+                  onClick={() => onEdit(index)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#4CAF50", // Màu xanh
+                    marginRight: "10px",
+                  }}
+                >
+                  <FaEdit size={18} />
+                </button>
+                <button
+                  onClick={() => onDelete(index)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#f44336", // Màu đỏ
+                  }}
+                >
+                  <FaTrash size={18} />
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 
@@ -170,114 +202,136 @@ const UserForm = ({ initialData, onSave }) => {
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: "500px", margin: "auto" }}>
-      <div>
-        <label>Username:</label>
-        <input
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div>
-        <label>First Name:</label>
-        <input
-          type="text"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div>
-        <label>Last Name:</label>
-        <input
-          type="text"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div>
-        <label>Birthday:</label>
-        <input
-          type="date"
-          name="birthDay"
-          value={formData.birthDay}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Gender:</label>
-        <select
-          name="gender"
-          value={formData.gender}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Chọn giới tính</option>
-          <option value="Male">Nam</option>
-          <option value="Female">Nữ</option>
-        </select>
-      </div>
-      <div>
-        <label>Email:</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div>
-        <label>Phone Number:</label>
-        <input
-          type="text"
-          name="phoneNumber"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div>
-        <label>Address:</label>
-        <input
-          type="text"
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-        />
-      </div>
-      <div>
-        <label>Role:</label>
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Chọn vai trò</option>
-          <option value="Admin">Admin</option>
-          <option value="Student">Học sinh</option>
-        </select>
-      </div>
-      <button
-        type="submit"
-        style={{
-          backgroundColor: "#d30000",
-          color: "#fff",
-          width: "50px",
-          padding: "5px 10px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
-        Lưu
-      </button>
+      <h2 style={{ textAlign: "center" }}>Thông tin người dùng</h2>
+      <Grid container spacing={1}>
+        <Grid item xs={6}>
+          <TextField
+            label="Username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="First Name"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <TextField
+            label="Last Name"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <TextField
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <TextField
+            label="Phone Number"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <TextField
+            label="Birthday"
+            name="birthDay"
+            value={formData.birthDay}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            label="Address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            sx={{ fontSize: '14px' }}
+          />
+        </Grid>
+
+        <Grid item xs={6}>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Role</InputLabel>
+            <Select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              sx={{ fontSize: '14px' }}
+            >
+              <MenuItem value="ADMIN">admin</MenuItem>
+              <MenuItem value="STUDENT">student</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Gender</InputLabel>
+            <Select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              sx={{ fontSize: '14px' }}
+            >
+              <MenuItem value={0}>Nam</MenuItem>
+              <MenuItem value={1}>Nữ</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={1} justifyContent="center" style={{ marginTop: '20px' }}>
+        <Grid item xs={2}>
+          <Button 
+            variant="contained" color="error" type="submit" fullWidth>
+            Lưu
+          </Button>
+        </Grid>
+      </Grid>
     </form>
   );
 };

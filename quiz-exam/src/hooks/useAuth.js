@@ -17,5 +17,5 @@ export const useAuth = () => {
     }
   }, [user]); // Dependency array thêm user để useEffect chạy lại khi user thay đổi
 
-  return { isLoggedIn, user };
+  return { isLoggedIn, setIsLoggedIn, user };
 }; 

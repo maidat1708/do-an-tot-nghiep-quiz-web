@@ -12,7 +12,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const Navbar = () => {
   const { user, setUser } = useContext(AuthContext);
-  const { isLoggedIn } = useAuth(); // Sử dụng hook useAuth
+  const { isLoggedIn, setIsLoggedIn } = useAuth(); // Sử dụng hook useAuth
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -38,24 +38,8 @@ const Navbar = () => {
   };
 
   const handleLoginSuccess = () => {
-    setShowLogin(false);
+    setIsLoggedIn(true);
     // Không cần setIsLoggedIn vì đã có useAuth
-  };
-
-  const handleExamClick = () => {
-    if (!isLoggedIn) {
-      setShowLogin(true); // Hiển thị popup đăng nhập nếu chưa đăng nhập
-    } else {
-      navigate('/exam'); // Chuyển đến trang làm bài thi
-    }
-  };
-
-  const handleResultsClick = () => {
-    if (!isLoggedIn) {
-      setShowLogin(true); // Hiển thị popup đăng nhập nếu chưa đăng nhập
-    } else {
-      navigate('/results'); // Chuyển đến trang kết quả thi
-    }
   };
 
   // Mở menu khi nhấn vào avatar
@@ -103,11 +87,11 @@ const Navbar = () => {
             {isLoggedIn && user ? (
               isAdmin ? (
                 <>
-                  <Button color="inherit" component={Link} to="/manage-users" sx={{ mx: 2 }}>Quản lý người dùng</Button>
-                  <Button color="inherit" component={Link} to="/manage-subjects" sx={{ mx: 2 }}>Quản lý môn học</Button>
-                  <Button color="inherit" component={Link} to="/manage-questions" sx={{ mx: 2 }}>Quản lý câu hỏi</Button>
-                  <Button color="inherit" component={Link} to="/manage-exams" sx={{ mx: 2 }}>Quản lý đề</Button>
-                  <Button color="inherit" component={Link} to="/manage-results" sx={{ mx: 2 }}>Quản lý điểm thi</Button>
+                  <Button color="inherit" component={Link} to="/manage-users" sx={{ mx: 2 }}>Người dùng</Button>
+                  <Button color="inherit" component={Link} to="/manage-subjects" sx={{ mx: 2 }}>Môn học</Button>
+                  <Button color="inherit" component={Link} to="/manage-questions" sx={{ mx: 2 }}>Câu hỏi</Button>
+                  <Button color="inherit" component={Link} to="/manage-exams" sx={{ mx: 2 }}>Đề thi</Button>
+                  <Button color="inherit" component={Link} to="/manage-results" sx={{ mx: 2 }}>Điểm thi</Button>
                 </>
               ) : (
                 <>
