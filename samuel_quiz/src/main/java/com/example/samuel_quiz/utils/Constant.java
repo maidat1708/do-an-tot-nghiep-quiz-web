@@ -20,4 +20,15 @@ public class Constant {
     public static final String REGEX_VALID_ID_NO = "^[0-9]+$";
     public static final String YEAR = "yy";
     public static final String TIMESTAMP_DATE_PATTERN_SIMPLE = "yyyy-MM-dd'T'HH:mm:ss";
+
+    public class FileType {
+        public static final String PDF = "application/pdf";
+        public static final String DOC = "application/msword";
+        public static final String DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        private FileType() {} // Prevent instantiation
+    }
+
+    public static final String TEMPLATE_DIR = "templates";
+    public static final String RESOURCES_DIR = "src/main/resources";
 }

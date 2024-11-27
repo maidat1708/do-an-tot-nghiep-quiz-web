@@ -1,5 +1,6 @@
 package com.example.samuel_quiz.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.example.samuel_quiz.dto.quiz.request.QuizCreateRequest;
@@ -27,5 +28,17 @@ public interface IQuizService {
     QuizResponse importQuizFromPDF(QuizImportRequest request);
 
     ResultResponse gradeQuiz(QuizSubmissionRequest request);
+
+    byte[] createWordQuiz(Long quizId, Long templateId) throws IOException;
+
+    byte[] createPDFQuiz(Long quizId, Long templateId) throws IOException;
+
+    default byte[] createWordQuiz(Long quizId, Long templateId, String subjectName, Long duration) throws IOException {
+        return createWordQuiz(quizId, templateId);
+    }
+
+    default byte[] createPDFQuiz(Long quizId, Long templateId, String subjectName, Long duration) throws IOException {
+        return createPDFQuiz(quizId, templateId);
+    }
 
 }

@@ -24,6 +24,14 @@ spring:
     hiddenmethod:
       filter:
         enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10485760
+      max-request-size: 10485760
+  # Thêm cấu hình để cho phép truy cập tài nguyên tĩnh
+  web:
+    resources:
+      static-locations: classpath:/templates/
 server:
   port: 8080
   servlet:
@@ -43,3 +51,13 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+app:
+  template:
+    upload-dir: ${user.dir}/src/main/resources/templates
+    max-file-size: 10485760
+    allowed-types:
+      - application/pdf
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+

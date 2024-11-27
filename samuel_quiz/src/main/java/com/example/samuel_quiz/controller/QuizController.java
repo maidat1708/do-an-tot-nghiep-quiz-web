@@ -1,6 +1,7 @@
 package com.example.samuel_quiz.controller;
 
 import java.util.List;
+import java.io.IOException;
 
 import com.example.samuel_quiz.dto.result.response.ResultResponse;
 import com.example.samuel_quiz.service.impl.WordService;
@@ -8,6 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
 
 import com.example.samuel_quiz.dto.quiz.request.QuizCreateRequest;
 import com.example.samuel_quiz.dto.quiz.request.QuizUpdateRequest;
@@ -95,6 +99,30 @@ public class QuizController {
         return APIResponse.<ResultResponse>builder()
                 .result(quizService.gradeQuiz(request))
                 .build();
+    }
+
+    @GetMapping("/{quizId}/export-word")
+    public ResponseEntity<ByteArrayResource> exportQuizToWord(@PathVariable Long quizId, @RequestParam Long templateId) throws IOException {
+        byte[] data = quizService.createWordQuiz(quizId, templateId);
+        ByteArrayResource resource = new ByteArrayResource(data);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .header("Content-Disposition", "attachment; filename=quiz_" + quizId + ".docx")
+                .contentLength(data.length)
+                .body(resource);
+    }
+
+    @GetMapping("/{quizId}/export-pdf")
+    public ResponseEntity<ByteArrayResource> exportQuizToPDF(@PathVariable Long quizId, @RequestParam Long templateId) throws IOException {
+        byte[] data = quizService.createPDFQuiz(quizId, templateId);
+        ByteArrayResource resource = new ByteArrayResource(data);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header("Content-Disposition", "attachment; filename=quiz_" + quizId + ".pdf")
+                .contentLength(data.length)
+                .body(resource);
     }
 
 }

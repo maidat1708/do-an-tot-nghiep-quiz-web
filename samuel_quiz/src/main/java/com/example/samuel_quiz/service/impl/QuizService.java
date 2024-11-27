@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.samuel_quiz.dto.answer.AnswerDTO;
 import com.example.samuel_quiz.dto.question.QuestionDTO;
 import com.example.samuel_quiz.dto.quiz.QuizDTO;
 import com.example.samuel_quiz.dto.quiz.request.QuizImportRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
 import com.example.samuel_quiz.dto.result.ResultDTO;
 import com.example.samuel_quiz.entities.*;
+import com.example.samuel_quiz.exception.AppException;
+import com.example.samuel_quiz.exception.ErrorCode;
 import com.example.samuel_quiz.mapper.*;
 import com.example.samuel_quiz.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +82,9 @@ public class QuizService implements IQuizService {
 
     @Autowired
     ResultMapper resultMapper;
+
+    @Autowired
+    DocumentService documentService;
 
     @Override
     public List<QuizResponse> getQuizzes() {
@@ -428,5 +434,67 @@ public class QuizService implements IQuizService {
         ResultDTO resultDTO = resultMapper.toDto(savedResult);
         
         return resultMapper.toResultResponse(resultDTO);
+    }
+
+    @Override
+    @Transactional
+    public byte[] createWordQuiz(Long quizId, Long templateId) throws IOException {
+        Quiz quiz = quizRepo.findById(quizId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Quiz not found"));
+        
+        String subjectName = quiz.getSubject().getSubjectName();
+        Long duration = quiz.getDuration();
+        
+        List<QuestionDTO> questions = convertQuizToQuestionDTOs(quiz);
+        return documentService.createWordQuiz(templateId, questions, quiz.getQuizName(), duration);
+    }
+
+    @Override
+    @Transactional
+    public byte[] createPDFQuiz(Long quizId, Long templateId) throws IOException {
+        Quiz quiz = quizRepo.findById(quizId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Quiz not found"));
+        
+        String subjectName = quiz.getSubject().getSubjectName();
+        Long duration = quiz.getDuration();
+        
+        List<QuestionDTO> questions = convertQuizToQuestionDTOs(quiz);
+        return documentService.createPDFQuiz(templateId, questions, quiz.getQuizName(), duration);
+    }
+
+    @Override
+    public byte[] createWordQuiz(Long quizId, Long templateId, String quizName, Long duration) throws IOException {
+        Quiz quiz = quizRepo.findById(quizId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Quiz not found"));
+        
+        List<QuestionDTO> questions = convertQuizToQuestionDTOs(quiz);
+        return documentService.createWordQuiz(templateId, questions, quiz.getQuizName(), duration);
+    }
+
+    @Override
+    public byte[] createPDFQuiz(Long quizId, Long templateId, String quizName, Long duration) throws IOException {
+        Quiz quiz = quizRepo.findById(quizId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Quiz not found"));
+        
+        List<QuestionDTO> questions = convertQuizToQuestionDTOs(quiz);
+        return documentService.createPDFQuiz(templateId, questions, quizName, duration);
+    }
+
+    private List<QuestionDTO> convertQuizToQuestionDTOs(Quiz quiz) {
+        return quiz.getQuestionHistories().stream()
+                .map(qh -> {
+                    QuestionDTO q = new QuestionDTO();
+                    q.setQuestionText(qh.getQuestionText());
+                    q.setLevel(qh.getLevel());
+                    q.setAnswers(qh.getAnswerHistories().stream()
+                            .map(ah -> {
+                                AnswerDTO a = new AnswerDTO();
+                                a.setAnswerText(ah.getAnswerText());
+                                a.setIsCorrect(ah.getIsCorrect());
+                                return a;
+                            }).collect(Collectors.toSet()));
+                    return q;
+                })
+                .collect(Collectors.toList());
     }
 }
