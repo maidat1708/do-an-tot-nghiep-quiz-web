@@ -82,7 +82,7 @@ const UserManagement = () => {
       {/* Modal for Delete Confirmation */}
       <Modal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <div style={{ textAlign: "center" }}>
-          <h3>Bạn có chắc chắn muốn xóa người dùng này không?</h3>
+          <p>Bạn có chắc chắn muốn xóa người dùng này không?</p>
           <button
             onClick={handleDelete}
             style={{

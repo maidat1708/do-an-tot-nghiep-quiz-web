@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Container,Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Collapse,Box,List,ListItem,ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,} from '@mui/material';
+import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Collapse,Box,List,ListItem,ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,} from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ExamPopup from "../../components/ExamPopup";
 
 // Component con để hiển thị chi tiết câu hỏi
 const QuestionRow = ({ question }) => {
@@ -73,6 +75,7 @@ const ExamManagement = () => {
   const [selectedQuestions, setSelectedQuestions] = useState([]); // Câu hỏi đã chọn
   const [selectedSubjectId, setSelectedSubjectId] = useState(subjects.length > 0 ? subjects[0].id : null);
   const [openQuestionDialog, setOpenQuestionDialog] = useState(false);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [openQuestionEditDialog, setOpenQuestionEditDialog] = useState(false);
   const [questionFormData, setQuestionFormData] = useState({
@@ -141,6 +144,15 @@ const ExamManagement = () => {
     }
   };
 
+  // Nếu danh sách subjects thay đổi, tự động chọn bài thi đầu tiên
+  useEffect(() => {
+    if (subjects.length > 0) {
+      setSelectedSubjectId(subjects[0].id);
+    }
+  }, [subjects]);
+
+  const filteredExams = selectedSubjectId ? exams.filter((q) => q.subject.id === selectedSubjectId) : exams;
+  
   // Gọi API khi component mount
   useEffect(() => {
     fetchExams();
@@ -421,6 +433,17 @@ const ExamManagement = () => {
     }
   };
 
+  // Lấy dữ liệu câu hỏi của đề thi
+  const handlePreviewClick = (exam) => {
+    setSelectedExam(exam.questions); 
+    setIsPopupOpen(true); // Mở popup
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false);
+    setSelectedExam(null);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
@@ -478,55 +501,48 @@ const ExamManagement = () => {
                 <TableCell>Môn học</TableCell>
                 <TableCell>Thời gian (phút)</TableCell>
                 <TableCell>Số câu hỏi</TableCell>
+                <TableCell>Xem trước</TableCell>
                 <TableCell>Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {exams.map((exam) => (
-                <React.Fragment key={exam.id}>
-                  <TableRow>
-                    <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => setSelectedExam(selectedExam === exam.id ? null : exam.id)}
-                      >
-                        {selectedExam === exam.id ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{exam.quizName}</TableCell>
-                    <TableCell>{exam.subject.subjectName}</TableCell>
-                    <TableCell>{exam.duration}</TableCell>
-                    <TableCell>{exam.totalQuestion}</TableCell>
-                    <TableCell>
-                      <button
-                        onClick={() => handleEditExam(exam)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#4CAF50", // Màu xanh
-                          marginRight: "10px",
-                        }}
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteExam(exam.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#f44336", // Màu đỏ
-                        }}
-                      >
-                        <FaTrash size={18} />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                  {selectedExam === exam.id && exam.questionHistories.map((question) => (
-                    <QuestionRow key={question.id} question={question} />
-                  ))}
-                </React.Fragment>
+              {filteredExams.map((exam) => (
+                <TableRow key={exam.id}>
+                  <TableCell>{exam.quizName}</TableCell>
+                  <TableCell>{exam.subject.subjectName}</TableCell>
+                  <TableCell>{exam.duration}</TableCell>
+                  <TableCell>{exam.totalQuestion}</TableCell>
+                  <TableCell >
+                    <IconButton onClick={() => handlePreviewClick(exam)}>
+                      <VisibilityIcon color="primary" />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={() => handleEditExam(exam)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#4CAF50", // Màu xanh
+                        marginRight: "10px",
+                      }}
+                    >
+                      <FaEdit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExam(exam.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#f44336", // Màu đỏ
+                      }}
+                    >
+                      <FaTrash size={18} />
+                    </button>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>
@@ -796,6 +812,8 @@ const ExamManagement = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        {/* Popup show bài thi xem trước*/}
+        <ExamPopup open={isPopupOpen} onClose={handleClosePopup} examData={selectedExam} />
       </Box>
     </Box>
   );
