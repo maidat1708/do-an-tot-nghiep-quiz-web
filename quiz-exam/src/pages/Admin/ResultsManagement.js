@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit } from "react-icons/fa"; // Import icon
+import { Box, Paper, Table, TableBody, TableCell,TableContainer,TableHead,TableRow } from '@mui/material';
+import { FaEdit } from "react-icons/fa"; // Import icons
 import Modal from "../../components/Modal"; // Import modal component
 
 const ResultManagement = () => {
@@ -49,59 +50,47 @@ const ResultManagement = () => {
 // Component bảng hiển thị danh sách kết quả thi
 const ResultTable = ({ results, onEdit }) => {
   return (
-    <table
-      border="1"
-      style={{width: "80%", margin: "auto", textAlign: "center", justifyContent: "center",}}
-    >
-      <thead>
-        <tr>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Username</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Họ</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tên</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Môn học</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tên bài thi</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Điểm</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        {results.map((result, index) => (
-          <tr key={index}>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.username}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.firstName}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.lastName}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.subject}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.examName}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {result.score}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              <button
-                onClick={() => onEdit(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#4CAF50", // Màu xanh
-                }}
-              >
-                <FaEdit size={18} />
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TableContainer component={Paper} style = {{ width: "50%", margin: "auto", textAlign: "center", justifyContent: "center",}}>
+      <Table>
+        <TableHead>
+          <TableRow style={{background: "#F7F7F7"}}>
+            <TableCell>Username</TableCell>
+            <TableCell>Tên</TableCell>
+            <TableCell>Họ</TableCell>
+            <TableCell>Môn học</TableCell>
+            <TableCell>Tên bài thi</TableCell>
+            <TableCell>Điểm</TableCell>
+            <TableCell>Thao tác</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {results.map((result, index) => (
+            <TableRow key={index}>
+              <TableCell>{result.username}</TableCell>
+              <TableCell>{result.firstName}</TableCell>
+              <TableCell>{result.lastName}</TableCell>
+              <TableCell>{result.subject}</TableCell>
+              <TableCell>{result.examName}</TableCell>
+              <TableCell>{result.score}</TableCell>
+              <TableCell>
+                <button
+                  onClick={() => onEdit(index)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#4CAF50", // Màu xanh
+                    marginRight: "10px",
+                  }}
+                >
+                  <FaEdit size={18} />
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

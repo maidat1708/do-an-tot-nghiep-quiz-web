@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const ExamPage = () => {
@@ -27,54 +28,68 @@ const ExamPage = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <Box sx={{ p: 3 }}>
       <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Danh sách bài thi</h1>
 
       {examDetails.length === 0 ? (
-        <p style={{ textAlign: "center" }}>Không có bài thi nào.</p>
+        <p style={{ textAlign: "center", fontSize: "16px" }}>Không có bài thi nào.</p>
       ) : (
-        <table
-          border="1"
-          style={{
-            width: "90%",
-            margin: "auto",
-            textAlign: "center",
-            justifyContent: "center",
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Môn học</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Thời gian</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Mô tả</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Làm bài</th>
-            </tr>
-          </thead>
-          <tbody>
-            {examDetails.map((exam, index) => (
-              <tr key={index}>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{exam.subject}</td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{exam.duration}</td>
-                <td style={{ border: "1px solid #ddd", textAlign: "left", padding: "0 10px" }}>
-                  {exam.description}
-                </td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  <button
-                    onClick={() => handleStartExam(exam)}
-                    style={{
-                      backgroundColor: "#4CAF50",color: "white",padding: "5px 10px",
-                      border: "none",borderRadius: "5px",cursor: "pointer",
-                    }}
-                  >
-                    Bắt đầu làm bài
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableContainer component={Paper} style={{ width: "90%", margin: "auto" }}>
+          <Table>
+            <TableHead>
+              <TableRow style={{ background: "#F7F7F7" }}>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  Môn học
+                </TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  Thời gian
+                </TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  Mô tả
+                </TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  Làm bài
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {examDetails.map((exam, index) => (
+                <TableRow key={index}>
+                  <TableCell align="center" style={{ fontSize: "14px" }}>
+                    {exam.subject}
+                  </TableCell>
+                  <TableCell align="center" style={{ fontSize: "14px" }}>
+                    {exam.duration}
+                  </TableCell>
+                  <TableCell align="center" style={{ fontSize: "14px", padding: "10px" }}>
+                    {exam.description}
+                  </TableCell>
+                  <TableCell align="center">
+                    {/* <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      onClick={() => handleStartExam(exam)}
+                    >
+                      Bắt đầu làm bài
+                    </Button> */}
+                    <button
+                      onClick={() => handleStartExam(exam)}
+                      style={{
+                        backgroundColor: "#4CAF50",color: "white",padding: "5px 10px",
+                        border: "none",borderRadius: "5px",cursor: "pointer",
+                      }}
+                    >
+                      Bắt đầu làm bài
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </div>
+    </Box>
   );
 };
 

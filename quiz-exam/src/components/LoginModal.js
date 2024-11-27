@@ -64,6 +64,7 @@ const LoginModal = ({ onClose, onSwitchToRegister, onSuccess }) => {
                 required 
               />
               <span 
+                className="eye-icon" 
                 onClick={() => setShowPassword(!showPassword)}
                 style={{position: 'absolute',right: '10px',top: '50%',transform: 'translateY(-50%)',cursor: 'pointer',}}
               >

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Grid, Box, Paper, Table, TableBody, TableCell,TableContainer,TableHead,TableRow, TextField, Button } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa"; // Import icons
 import Modal from "../../components/Modal"; // Import modal component
 
@@ -6,6 +7,8 @@ const SubjectManagement = () => {
   const [subjects, setSubjects] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
 
   // Xử lý mở popup thêm mới
   const handleAdd = () => {
@@ -19,11 +22,18 @@ const SubjectManagement = () => {
     setModalOpen(true);
   };
 
-  // Xóa môn học
-  const handleDelete = (index) => {
+  // Hiển thị popup xác nhận xóa
+  const handleDeleteClick = (index) => {
+    setDeleteIndex(index);
+    setDeleteConfirmOpen(true);
+  };
+
+  // Xử lý xóa môn học sau khi xác nhận
+  const handleDeleteConfirm = () => {
     const updatedSubjects = [...subjects];
-    updatedSubjects.splice(index, 1);
+    updatedSubjects.splice(deleteIndex, 1);
     setSubjects(updatedSubjects);
+    setDeleteConfirmOpen(false);
   };
 
   // Lưu môn học sau khi thêm/sửa
@@ -39,25 +49,19 @@ const SubjectManagement = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <Box sx={{ p: 3 }}>
       <button
         onClick={handleAdd}
+        sx={{ mb: 2 }}
         style={{
-          backgroundColor: "#d30000",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "5px",
-          marginBottom: "30px",
-          cursor: "pointer",
-        }}
-      >
+          backgroundColor: "#d30000", color: "white", padding: "10px 20px", border: "none",
+          borderRadius: "5px", marginBottom: "30px", cursor: "pointer",}}>
         + Thêm mới
       </button>
       <SubjectTable
         subjects={subjects}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         <SubjectForm
@@ -65,39 +69,47 @@ const SubjectManagement = () => {
           onSave={handleSave}
         />
       </Modal>
-    </div>
+      <Modal isOpen={isDeleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
+        <div style={{ textAlign: "center" }}>
+          <p>Bạn có chắc chắn muốn xóa môn học này không?</p>
+          <button
+            onClick={handleDeleteConfirm}
+            style={{
+              backgroundColor: "#d30000",color: "white",padding: "5px 15px",
+              border: "none",borderRadius: "5px",cursor: "pointer",marginRight: "10px",}}>
+            OK
+          </button>
+          <button
+            onClick={() => setDeleteConfirmOpen(false)}
+            style={{
+              backgroundColor: "#ccc",color: "black",padding: "5px 15px",
+              border: "none",borderRadius: "5px",cursor: "pointer",}}>
+            Hủy
+          </button>
+        </div>
+      </Modal>
+    </Box>
   );
 };
 
 // Component bảng hiển thị danh sách môn học
 const SubjectTable = ({ subjects, onEdit, onDelete }) => {
   return (
-    <table
-      border="1"
-      style={{
-        width: "80%",
-        margin: "auto",
-        textAlign: "center",
-        justifyContent: "center",
-      }}
-    >
-      <thead>
-        <tr>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tên môn học</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Mã</th>
-          <th style={{ border: "1px solid #ddd", padding: "8px" }}>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
+    <TableContainer component={Paper} style = {{ width: "50%", margin: "auto", textAlign: "center", justifyContent: "center",}}>
+    <Table>
+      <TableHead>
+        <TableRow style={{background: "#F7F7F7"}}>
+          <TableCell>Tên môn học</TableCell>
+          <TableCell>Mã môn</TableCell>
+          <TableCell>Thao tác</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
         {subjects.map((subject, index) => (
-          <tr key={index}>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {subject.name}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-              {subject.code}
-            </td>
-            <td style={{ border: "1px solid #ddd", padding: "8px" }}>
+          <TableRow key={index}>
+            <TableCell>{subject.name}</TableCell>
+            <TableCell>{subject.code}</TableCell>
+            <TableCell>
               <button
                 onClick={() => onEdit(index)}
                 style={{
@@ -121,11 +133,12 @@ const SubjectTable = ({ subjects, onEdit, onDelete }) => {
               >
                 <FaTrash size={18} />
               </button>
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
+  </TableContainer>
   );
 };
 
@@ -158,47 +171,43 @@ const SubjectForm = ({ initialData, onSave }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: "10px" }}>
-        <label style={{ display: "block", marginBottom: "5px" }}>
-          Tên môn học:
-        </label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-          required
-        />
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <label style={{ display: "block", marginBottom: "5px" }}>
-          Mã môn học:
-        </label>
-        <input
-          type="text"
-          name="code"
-          value={formData.code}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-          required
-        />
-      </div>
-      <button
-        type="submit"
-        style={{
-          backgroundColor: "#d30000",
-          color: "#fff",
-          width: "50px",
-          padding: "5px 10px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
-        Lưu
-      </button>
+    <form onSubmit={handleSubmit} style={{ maxWidth: "500px", margin: "auto" }}>
+      <h2 style={{ textAlign: "center" }}>Thông tin môn học</h2>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField
+            label="Tên môn học"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: "14px" }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="Mã môn học"
+            name="code"
+            value={formData.code}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+            sx={{ fontSize: "14px" }}
+          />
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={1} justifyContent="center" style={{ marginTop: "20px" }}>
+        <Grid item xs={4}>
+          <Button 
+            variant="contained" color="error" type="submit" fullWidth>
+            Lưu
+          </Button>
+        </Grid>
+      </Grid>
     </form>
   );
 };

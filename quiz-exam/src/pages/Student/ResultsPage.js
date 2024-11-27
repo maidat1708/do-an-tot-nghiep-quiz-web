@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import ResultsModal from "../../components/ResultsModal";
 
 const ResultsPage = () => {
@@ -19,45 +20,41 @@ const ResultsPage = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>
-        Lịch sử kết quả thi
-      </h1>
-
+    <Box sx={{ p: 3 }}>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Lịch sử kết quả thi</h1>
       {history.length === 0 ? (
-        <p style={{ textAlign: "center" }}>Không có lịch sử thi.</p>
+        <p style={{ textAlign: "center", fontSize: "16px" }}>Không có lịch sử thi.</p>
       ) : (
-        <table
-          border="1"
-          style={{
-            width: "90%",
-            margin: "auto",
-            textAlign: "center",
-            justifyContent: "center",
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tên bài thi</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Thời gian bắt đầu</th>
-              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Điểm</th>
-            </tr>
-          </thead>
-          <tbody>
-            {history.map((examResult, index) => (
-              <tr key={index}>
-                <td
-                  style={{ border: "1px solid #ddd", padding: "8px", cursor: "pointer", color: "#007BFF", textDecoration: "underline", }}
-                  onClick={() => handleExamClick(examResult)}
-                >
-                  {examResult.quizName}
-                </td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{examResult.timeStart}</td>
-                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{examResult.score}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableContainer component={Paper} style={{ width: "80%", margin: "auto", marginTop: "20px" }}>
+          <Table>
+            <TableHead>
+              <TableRow style={{ background: "#F7F7F7" }}>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px"}}>Tên bài thi</TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px"}}>Thời gian bắt đầu</TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px"}}>Điểm</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {history.map((examResult, index) => (
+                <TableRow key={index}>
+                  <TableCell
+                    align="center"
+                    onClick={() => handleExamClick(examResult)}
+                    style={{
+                      cursor: "pointer",
+                      color: "#007BFF",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    {examResult.quizName}
+                  </TableCell>
+                  <TableCell align="center">{examResult.timeStart}</TableCell>
+                  <TableCell align="center">{examResult.score}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
 
       {/* Modal hiển thị kết quả chi tiết */}
@@ -67,7 +64,7 @@ const ResultsPage = () => {
           onClose={() => setShowPopup(false)}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

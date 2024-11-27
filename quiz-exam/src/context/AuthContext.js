@@ -57,8 +57,10 @@ export const AuthProvider = ({ children }) => {
         if (userData) {
           return true;
         }
+      } else {
+        console.error('Đăng nhập thất bại');
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Lỗi khi đăng nhập:', error);
       return false;
@@ -86,8 +88,10 @@ export const AuthProvider = ({ children }) => {
         const userData = await response.json();
         setUser(userData.result); // Cập nhật user trong context
         return userData;
+      } else {
+        console.error('Lấy dữ liệu người dùng thất bại.');
+        return null;
       }
-      return null;
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu người dùng:', error);
       return null;
