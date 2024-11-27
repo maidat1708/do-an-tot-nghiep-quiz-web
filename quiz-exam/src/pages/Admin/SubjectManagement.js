@@ -61,7 +61,7 @@ const SubjectManagement = () => {
       <SubjectTable
         subjects={subjects}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
       />
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         <SubjectForm

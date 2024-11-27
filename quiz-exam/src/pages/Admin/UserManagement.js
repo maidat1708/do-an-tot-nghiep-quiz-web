@@ -65,7 +65,11 @@ const UserManagement = () => {
         + Thêm mới
       </button>
 
-      <UserTable users={users} onEdit={handleEdit} onDelete={handleDelete} />
+      <UserTable 
+        users={users} 
+        onEdit={handleEdit} 
+        onDelete={confirmDelete} 
+      />
       
       {/* Modal for Add/Edit User */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>

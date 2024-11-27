@@ -423,24 +423,15 @@ const ExamManagement = () => {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
-       {/* Sidebar */}
-       <Box
-      sx={{
-        width: '15%',
-        backgroundColor: '#fff',
-        padding: '10px',
-        borderRadius: '8px',
-        border: '1px solid #ccc',
+      {/* Sidebar */}
+      <Box
+        sx={{
+        width: '15%', backgroundColor: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ccc',
       }}
       >     
         <Box sx={{
-          backgroundColor: '#f5f5f5',
-          padding: '10px',
-          borderRadius: '4px',
-          fontWeight: 'bold',
-          textAlign: 'center',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-          marginBottom: '10px',
+          backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px', fontWeight: 'bold',
+          textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', marginBottom: '10px',
         }}
         >
           Ngân hàng câu hỏi
@@ -450,12 +441,8 @@ const ExamManagement = () => {
             key={subject.id}
             sx={{
               backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#f5f5f5', // Màu nền thay đổi khi được chọn
-              padding: '10px',
-              marginBottom: '8px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.1)', // Hiệu ứng bóng
+              padding: '10px', marginBottom: '8px', borderRadius: '4px',
+              textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', // Hiệu ứng bóng
               '&:hover': {
                 backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#e0e0e0', // Hover vẫn giữ được màu nếu chọn
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)', // Hiệu ứng bóng khi hover
@@ -476,13 +463,8 @@ const ExamManagement = () => {
           onClick={() => setOpenDialog(true)}
           sx={{ mb: 2 }}
           style={{
-            backgroundColor: '#d30000',
-            color: 'white',
-            padding: '10px 20px',
-            border: 'none',
-            borderRadius: '5px',
-            marginBottom: '30px',
-            cursor: 'pointer'
+            backgroundColor: '#d30000', color: 'white', padding: '10px 20px', border: 'none',
+            borderRadius: '5px', marginBottom: '30px', cursor: 'pointer'
           }}
         >
           Tạo đề thi mới
