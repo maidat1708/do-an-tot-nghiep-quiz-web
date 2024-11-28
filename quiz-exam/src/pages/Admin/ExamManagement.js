@@ -435,7 +435,7 @@ const ExamManagement = () => {
 
   // Lấy dữ liệu câu hỏi của đề thi
   const handlePreviewClick = (exam) => {
-    setSelectedExam(exam.questions); 
+    setSelectedExam(exam.questionHistories); 
     setIsPopupOpen(true); // Mở popup
   };
 

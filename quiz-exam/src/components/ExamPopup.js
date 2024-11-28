@@ -6,7 +6,6 @@ const ExamPopup = ({ open, onClose, examData }) => {
   const [showSolution, setShowSolution] = useState(false);
 
   if (!open || !examData) return null;
-
   return (
     <Box
       sx={{
@@ -48,31 +47,24 @@ const ExamPopup = ({ open, onClose, examData }) => {
       {/* Exam questions */}
       {examData.map((question, index) => (
         <Box key={index} sx={{ mb: 3 }}>
-          <Typography variant="body1" sx={{ mb: 1, fontWeight: "bold", textAlign: "left", }}>
+          <Typography variant="body1" sx={{ mb: 1, fontWeight: "bold", textAlign: "left" }}>
             Câu {index + 1}: {question.questionText}
           </Typography>
-          {question.answers.map((answer, idx) => (
+          {question.answerHistories.map((answer, idx) => (
             <Typography
               key={idx}
               sx={{
                 ml: 2,
                 mb: 0.5,
-                backgroundColor: showSolution && answer.isCorrect ? "#c8e6c9" : "transparent", // Highlight đáp án đúng
+                backgroundColor: showSolution && answer.isCorrect === 1 ? "#c8e6c9" : "transparent",
                 padding: "4px 8px",
                 borderRadius: "4px",
-                textAlign: "left", // Căn lề trái
+                textAlign: "left",
               }}
             >
-              {String.fromCharCode(65 + idx)}. {answer.text}
+              {String.fromCharCode(65 + idx)}. {answer.answerText}
             </Typography>
           ))}
-
-          {/* Show solution if toggled */}
-          {showSolution && (
-            <Typography sx={{ mt: 1, ml: 2, fontStyle: "italic", color: "gray", textAlign: "left", }}>
-              Lời giải: {question.solution}
-            </Typography>
-          )}
         </Box>
       ))}
     </Box>

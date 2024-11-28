@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Grid, Box, Paper, Table, TableBody, TableCell,TableContainer,TableHead,TableRow, TextField, Button } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa"; // Import icons
 import Modal from "../../components/Modal"; // Import modal component
+import { toast } from 'react-toastify';
 
 const SubjectManagement = () => {
   const [subjects, setSubjects] = useState([]);
@@ -9,6 +10,28 @@ const SubjectManagement = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
+
+  // Fetch subjects khi component mount
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  // Lấy danh sách môn học
+  const fetchSubjects = async () => {
+    try {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/subjects', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (data.code === 200) {
+        setSubjects(data.result);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải danh sách môn học');
+    }
+  };
 
   // Xử lý mở popup thêm mới
   const handleAdd = () => {
@@ -29,23 +52,55 @@ const SubjectManagement = () => {
   };
 
   // Xử lý xóa môn học sau khi xác nhận
-  const handleDeleteConfirm = () => {
-    const updatedSubjects = [...subjects];
-    updatedSubjects.splice(deleteIndex, 1);
-    setSubjects(updatedSubjects);
+  const handleDeleteConfirm = async () => {
+    try {
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/subjects/${subjects[deleteIndex].id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        toast.success('Xóa môn học thành công');
+        fetchSubjects(); // Refresh data
+      } else {
+        toast.error('Lỗi khi xóa môn học');
+      }
+    } catch (error) {
+      toast.error('Lỗi khi xóa môn học');
+    }
     setDeleteConfirmOpen(false);
   };
 
   // Lưu môn học sau khi thêm/sửa
-  const handleSave = (data) => {
-    const updatedSubjects = [...subjects];
-    if (editingIndex !== null) {
-      updatedSubjects[editingIndex] = data;
-    } else {
-      updatedSubjects.push(data);
+  const handleSave = async (data) => {
+    try {
+      const url = editingIndex !== null 
+        ? `http://26.184.129.66:8080/api/v1/subjects/${subjects[editingIndex].id}`
+        : 'http://26.184.129.66:8080/api/v1/subjects';
+      
+      const method = editingIndex !== null ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        toast.success(`${editingIndex !== null ? 'Cập nhật' : 'Thêm'} môn học thành công`);
+        fetchSubjects(); // Refresh data
+        setModalOpen(false);
+      } else {
+        toast.error(`Lỗi khi ${editingIndex !== null ? 'cập nhật' : 'thêm'} môn học`);
+      }
+    } catch (error) {
+      toast.error(`Lỗi khi ${editingIndex !== null ? 'cập nhật' : 'thêm'} môn học`);
     }
-    setSubjects(updatedSubjects);
-    setModalOpen(false);
   };
 
   return (
@@ -95,90 +150,99 @@ const SubjectManagement = () => {
 // Component bảng hiển thị danh sách môn học
 const SubjectTable = ({ subjects, onEdit, onDelete }) => {
   return (
-    <TableContainer component={Paper} style = {{ width: "50%", margin: "auto", textAlign: "center", justifyContent: "center",}}>
-    <Table>
-      <TableHead>
-        <TableRow style={{background: "#F7F7F7"}}>
-          <TableCell>Tên môn học</TableCell>
-          <TableCell>Mã môn</TableCell>
-          <TableCell>Thao tác</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {subjects.map((subject, index) => (
-          <TableRow key={index}>
-            <TableCell>{subject.name}</TableCell>
-            <TableCell>{subject.code}</TableCell>
-            <TableCell>
-              <button
-                onClick={() => onEdit(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#4CAF50", // Màu xanh
-                  marginRight: "10px",
-                }}
-              >
-                <FaEdit size={18} />
-              </button>
-              <button
-                onClick={() => onDelete(index)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#f44336", // Màu đỏ
-                }}
-              >
-                <FaTrash size={18} />
-              </button>
-            </TableCell>
+    <TableContainer component={Paper} style={{ width: "50%", margin: "auto", textAlign: "center", justifyContent: "center" }}>
+      <Table>
+        <TableHead>
+          <TableRow style={{background: "#F7F7F7"}}>
+            <TableCell>Tên môn học</TableCell>
+            <TableCell>Mã môn</TableCell>
+            <TableCell>Thao tác</TableCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </TableContainer>
+        </TableHead>
+        <TableBody>
+          {subjects.map((subject, index) => (
+            <TableRow key={index}>
+              <TableCell>{subject.subjectName}</TableCell>
+              <TableCell>{subject.description || `MH${subject.id}`}</TableCell>
+              <TableCell>
+                <button
+                  onClick={() => onEdit(index)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#4CAF50",
+                    marginRight: "10px",
+                  }}
+                >
+                  <FaEdit size={18} />
+                </button>
+                <button
+                  onClick={() => onDelete(index)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#f44336",
+                  }}
+                >
+                  <FaTrash size={18} />
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 
 // form thêm/sửa môn học
 const SubjectForm = ({ initialData, onSave }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    isVisible: false,
-    order: 1,
+    subjectName: "",
+    id: "",
+    description: ""
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        subjectName: initialData.subjectName || "",
+        id: initialData.id || "",
+        description: initialData.description || `MH${initialData.id}`
+      });
     }
   }, [initialData]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    const submitData = {
+      subjectName: formData.subjectName,
+      description: formData.description
+    };
+    onSave(submitData);
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: "500px", margin: "auto" }}>
-      <h2 style={{ textAlign: "center" }}>Thông tin môn học</h2>
+      <h2 style={{ textAlign: "center" }}>
+        {initialData ? "Sửa môn học" : "Thêm môn học mới"}
+      </h2>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <TextField
             label="Tên môn học"
-            name="name"
-            value={formData.name}
+            name="subjectName"
+            value={formData.subjectName}
             onChange={handleChange}
             fullWidth
             margin="normal"
@@ -189,8 +253,8 @@ const SubjectForm = ({ initialData, onSave }) => {
         <Grid item xs={12}>
           <TextField
             label="Mã môn học"
-            name="code"
-            value={formData.code}
+            name="description"
+            value={formData.description}
             onChange={handleChange}
             fullWidth
             margin="normal"
@@ -200,11 +264,15 @@ const SubjectForm = ({ initialData, onSave }) => {
         </Grid>
       </Grid>
 
-      <Grid container spacing={1} justifyContent="center" style={{ marginTop: "20px" }}>
-        <Grid item xs={4}>
+      <Grid container spacing={2} justifyContent="center" style={{ marginTop: "20px" }}>
+        <Grid item xs={6}>
           <Button 
-            variant="contained" color="error" type="submit" fullWidth>
-            Lưu
+            variant="contained" 
+            color="error" 
+            type="submit" 
+            fullWidth
+          >
+            {initialData ? "Cập nhật" : "Thêm mới"}
           </Button>
         </Grid>
       </Grid>

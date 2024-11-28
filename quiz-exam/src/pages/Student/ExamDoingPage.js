@@ -1,106 +1,118 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Typography, Box, Paper, Grid, Container, List, ListItem, ListItemText, Radio, RadioGroup, FormControlLabel, FormControl, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ResultsModal from '../../components/ResultsModal'; 
-
-const questions = [
-  { id: 1, question: 'Câu hỏi 1 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 2, question: 'Câu hỏi 2 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 3, question: 'Câu hỏi 3 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 4, question: 'Câu hỏi 4 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 5, question: 'Câu hỏi 5 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 6, question: 'Câu hỏi 6 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 7, question: 'Câu hỏi 7 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 8, question: 'Câu hỏi 8 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 9, question: 'Câu hỏi 9 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  { id: 10, question: 'Câu hỏi 10 : Nội dung câu hỏi...', options: ['A', 'B', 'C', 'D'] },
-  // Thêm các câu hỏi khác
-];
+import ResultsModal from '../../components/ResultsModal';
+import { toast } from 'react-toastify';
 
 const ExamDoingPage = () => {
   const navigate = useNavigate();
+  const { quizId } = useParams();
   
   const timer = useRef(null);
-  const questionRefs = useRef([]); // Tham chiếu cho các câu hỏi để cuộn đến câu hỏi tiếp theo
-  const duration = 60; // Tổng thời gian bài thi (phút)
+  const questionRefs = useRef([]);
+  const [quiz, setQuiz] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [selectedQuestion, setSelectedQuestion] = useState(questions[0]);
-  const [timeLeft, setTimeLeft] = useState(60 * 60); // 60 minutes (in seconds)
-  const [openDialog, setOpenDialog] = useState(false); // Trạng thái mở popup
-  const [examResult, setExamResult] = useState(null); // Kết quả thi
-  const [showResultsModal, setShowResultsModal] = useState(false); // Trạng thái mở modal kết quả
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [examResult, setExamResult] = useState(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+
+  const fetchQuizData = async () => {
+    try {
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/quizzes/${quizId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (data.code === 200) {
+        setQuiz(data.result);
+        setQuestions(data.result.questionHistories);
+        setSelectedQuestion(data.result.questionHistories[0]);
+        setTimeLeft(data.result.duration * 60);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải thông tin bài thi');
+    }
+  };
+
+  useEffect(() => {
+    fetchQuizData();
+  }, [quizId]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
-      alert('Hết thời gian làm bài');
-      navigate('/results');
+      toast.warning('Hết thời gian làm bài');
+      handleSubmit();
     }
-    // Chỉ tạo interval nếu modal không mở
-    if (!showResultsModal) {
+    if (!showResultsModal && timeLeft > 0) {
       timer.current = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
     }
 
     return () => {
-      // Clear interval when component unmounts or when modal is opened
       if (timer.current) {
         clearInterval(timer.current);
       }
     };
-  }, [timeLeft, navigate, showResultsModal]);
+  }, [timeLeft, showResultsModal]);
 
   const handleSelectQuestion = (questionId) => {
     const question = questions.find((q) => q.id === questionId);
     setSelectedQuestion(question);
-    // Cuộn đến câu hỏi khi người dùng chọn câu hỏi
-    questionRefs.current[questionId - 1]?.scrollIntoView({
+    questionRefs.current[questionId]?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
   };
 
-  const handleAnswerChange = (questionId, answer) => {
-    setAnswers({ ...answers, [questionId]: answer });
+  const handleAnswerChange = (questionId, answerId) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: {
+        questionId: parseInt(questionId),
+        answerId: parseInt(answerId),
+        isChoose: true
+      }
+    }));
   };
 
+  
   const handlePauseExam = () => {
     console.log('Bài thi đã tạm dừng');
     navigate('/exam');
   };
 
-  const handleSubmit = () => {
-    setOpenDialog(true); // Mở popup xác nhận nộp bài
-  };
+  const handleSubmit = async () => {
+    try {
+      const submitData = {
+        quizId: parseInt(quizId),
+        answers: Object.values(answers)
+      };
 
-  const formatExamDuration = (examDuration) => {
-    const minutes = Math.floor(examDuration); // Lấy phần nguyên là phút
-    const seconds = Math.round((examDuration - minutes) * 60); // Phần dư là giây
-    return `${minutes} phút ${seconds < 10 ? '0' : ''}${seconds} giây`;
-  };
+      const response = await fetch('http://26.184.129.66:8080/api/v1/quiz-histories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(submitData)
+      });
 
-  const ConfirmSubmit = () => {
-    const formattedDuration = formatExamDuration(((duration * 60 - timeLeft) / 60).toFixed(2)); // Chuyển đổi thành phút và giây
-    const examResult = {
-      quizName: 'Bài thi Toán', // Tên bài thi, có thể lấy từ API hoặc trang hiện tại
-      score: calculateScore(), // Hàm tính điểm (ví dụ)
-      totalQuestion: questions.length,
-      correctAnswer: calculateCorrectAnswers(), // Hàm tính số câu đúng
-      examDuration: formattedDuration, 
-      timeStart: new Date().toLocaleString(), // Thời gian bắt đầu
-    };
-
-    // Lưu kết quả vào localStorage
-    const history = JSON.parse(localStorage.getItem('examHistory')) || [];
-    history.push(examResult);
-    localStorage.setItem('examHistory', JSON.stringify(history));
-
-    // Cập nhật kết quả thi đã nộp và mở modal kết quả
-    setExamResult(examResult);
-    setShowResultsModal(true);
-    setOpenDialog(false); // Đóng dialog xác nhận nộp bài
-    if (timer.current) clearInterval(timer.current); // Dừng đếm thời gian khi nộp bài
-    console.log('Đã nộp bài thi, câu trả lời:', answers);
+      if (response.ok) {
+        const result = await response.json();
+        setExamResult(result.result);
+        setShowResultsModal(true);
+        if (timer.current) clearInterval(timer.current);
+      } else {
+        toast.error('Lỗi khi nộp bài thi');
+      }
+    } catch (error) {
+      toast.error('Lỗi khi nộp bài thi');
+    }
   };
 
   const handleCloseDialog = () => {
@@ -112,13 +124,11 @@ const ExamDoingPage = () => {
     setShowResultsModal(false); // Đóng modal kết quả và chuyển hướng về trang kết quả
     navigate('/exam');
   };
-
   const formatTime = (timeInSeconds) => {
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = timeInSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
-
   const calculateScore = () => {
     return (calculateCorrectAnswers() / questions.length) * 10;
   };
@@ -127,7 +137,6 @@ const ExamDoingPage = () => {
     // Hàm tính số câu trả lời đúng
     return Object.values(answers).filter(answer => answer === 'B').length;
   };
-
   const handleBack = () => {
     const currentIndex = questions.findIndex(q => q.id === selectedQuestion.id);
     if (currentIndex > 0) {
@@ -151,39 +160,45 @@ const ExamDoingPage = () => {
   };
 
   return (
-    <Box sx={{ padding: 1 }}>
-      {/* Thời gian còn lại */}
+    
+    <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
         <Typography variant="h6" color="primary">
           Thời gian còn lại: {formatTime(timeLeft)}
         </Typography>
       </Box>
 
-      <Container sx={{ marginTop: '50px' }}>
-        <Grid container spacing={2}>
-          {/* Phần nội dung câu hỏi */}
-          <Grid item xs={9}>
-            <Paper sx={{ padding: 1 }}>
-              <Typography variant="h5" gutterBottom>
-                Nội dung câu hỏi
-              </Typography>
-              <Typography variant="subtitle1">{selectedQuestion.question}</Typography>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  value={answers[selectedQuestion.id] || ''}
-                  onChange={(e) => handleAnswerChange(selectedQuestion.id, e.target.value)}
-                >
-                  {selectedQuestion.options.map((option, index) => (
-                    <FormControlLabel
-                      key={index}
-                      value={option}
-                      control={<Radio />}
-                      label={option}
-                    />
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              {/* Nút Back và Next */}
+      {quiz && (
+        <Container>
+          <Typography variant="h4" gutterBottom align="center">
+            {quiz.quizName}
+          </Typography>
+          
+          <Grid container spacing={3}>
+            <Grid item xs={9}>
+              <Paper sx={{ padding: 2 }}>
+                {selectedQuestion && (
+                  <>
+                    <Typography variant="h6" gutterBottom>
+                      Câu {questions.indexOf(selectedQuestion) + 1}: {selectedQuestion.questionText}
+                    </Typography>
+                    <FormControl component="fieldset">
+                      <RadioGroup
+                        value={answers[selectedQuestion.id]?.answerId || ''}
+                        onChange={(e) => handleAnswerChange(selectedQuestion.id, e.target.value)}
+                      >
+                        {selectedQuestion.answerHistories.map((answer) => (
+                          <FormControlLabel
+                            key={answer.id}
+                            value={answer.id}
+                            control={<Radio />}
+                            label={answer.answerText}
+                          />
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                  </>
+                )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
                 <Button variant="contained" color="primary" disabled={selectedQuestion.id === 1} onClick={handleBack}>
                   &lt; Quay lại
@@ -192,53 +207,54 @@ const ExamDoingPage = () => {
                   Tiếp theo &gt;
                 </Button>
               </Box>
-            </Paper>
-
-            {/* Nút Tạm dừng và Nộp bài */}
+              </Paper>
+              {/* Nút Tạm dừng và Nộp bài */}
             <Box sx={{ textAlign: 'center', marginTop: 2 }}>
               <Button variant="contained" color="error" onClick={handlePauseExam}sx={{ marginRight: 2 }}>
                 Tạm dừng
               </Button>
-              <Button variant="contained" color="success" onClick={handleSubmit} sx={{ marginRight: 2 }}>
-                Nộp bài
-              </Button>
+              <Button
+              variant="contained"
+              color="success"
+              onClick={() => setOpenDialog(true)}
+            >
+              Nộp bài
+            </Button>
             </Box>
+            </Grid>
+
+            <Grid item xs={3}>
+              <Paper sx={{ padding: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Danh sách câu hỏi
+                </Typography>
+                <List>
+                  {questions.map((question, index) => (
+                    <ListItem
+                      key={question.id}
+                      button
+                      onClick={() => handleSelectQuestion(question.id)}
+                      ref={(el) => questionRefs.current[question.id] = el}
+                      sx={{
+                        backgroundColor: selectedQuestion?.id === question.id ? '#e3f2fd' : 'transparent',
+                        marginBottom: 1
+                      }}
+                    >
+                      <ListItemText primary={`Câu ${index + 1}`} />
+                      {answers[question.id] && (
+                        <Typography variant="body2" color="success.main">✓</Typography>
+                      )}
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            </Grid>
           </Grid>
 
-          {/* Phần danh sách câu hỏi */}
-          <Grid item xs={3} sx={{ height: '500px', overflowY: 'auto' }}>
-            <Paper sx={{ padding: 1 }}>
-              <Typography variant="h5" gutterBottom>
-                Danh sách câu hỏi
-              </Typography>
-                <Box sx={{ maxHeight: '100%', overflowY: 'auto' }}>
-                  <List>
-                    {questions.map((question, index) => (
-                      <ListItem
-                        key={question.id}
-                        button
-                        onClick={() => handleSelectQuestion(question.id)}
-                        ref={(el) => questionRefs.current[index] = el}
-                        sx={{ backgroundColor: selectedQuestion.id === question.id ? '#dde' : 'transparent', marginBottom: 1 }}
-                      >
-                        <ListItemText primary={`Câu ${question.id}`} />
-                        {/* Hiển thị dấu tích khi câu hỏi đã được chọn đáp án */}
-                        {answers[question.id] && (
-                          <Typography variant="body2" color="green" sx={{ fontWeight: 'bold', marginLeft: '8px' }}>
-                            ✔
-                          </Typography>
-                        )}
-                      </ListItem>
-                    ))}
-                  </List>
-              </Box>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
+        </Container>
+      )}
 
-      {/* Popup xác nhận nộp bài */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>Bạn chắc chắn muốn nộp bài?</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
@@ -246,18 +262,22 @@ const ExamDoingPage = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Hủy
-          </Button>
-          <Button onClick={ConfirmSubmit} color="success">
+          <Button onClick={() => setOpenDialog(false)}  color="primary">Hủy</Button>
+          <Button onClick={handleSubmit} color="success">
             Đồng ý
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal kết quả thi */}
-      {showResultsModal && (
-        <ResultsModal examResult={examResult} onClose={handleCloseResultsModal} />
+      {showResultsModal && examResult && (
+        <ResultsModal
+          open={showResultsModal}
+          onClose={() => {
+            setShowResultsModal(false);
+            navigate('/exam');
+          }}
+          result={examResult}
+        />
       )}
     </Box>
   );

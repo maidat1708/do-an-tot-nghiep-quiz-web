@@ -54,7 +54,7 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/exam/doing"
+        path="/exam/doing/:quizId"
         element={
           <StudentRoute>
             <ExamDoingPage />

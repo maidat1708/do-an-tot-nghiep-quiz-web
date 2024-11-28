@@ -1,37 +1,44 @@
-import React from "react";
-import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
 
 const ExamPage = () => {
   const navigate = useNavigate();
+  const [quizzes, setQuizzes] = useState([]);
 
-  // Giả lập thông tin bài thi
-  const examDetails = [
-    {
-      subject: "Toán học 12",
-      duration: "60 phút",
-      description:
-        "Bài thi trắc nghiệm môn Toán, bao gồm 30 câu hỏi với thời gian làm bài là 60 phút.",
-    },
-    {
-      subject: "Vật lý 11",
-      duration: "45 phút",
-      description:
-        "Bài thi trắc nghiệm môn Vật lý, bao gồm 20 câu hỏi với thời gian làm bài là 45 phút.",
-    },
-  ];
+  // Fetch quizzes khi component mount
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
+
+  // Lấy danh sách bài thi
+  const fetchQuizzes = async () => {
+    try {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/quizzes', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (data.code === 200) {
+        setQuizzes(data.result);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải danh sách bài thi');
+    }
+  };
 
   // Xử lý khi nhấn nút "Bắt đầu làm bài"
-  const handleStartExam = (exam) => {
-    console.log(`Bắt đầu làm bài: ${exam.subject}`);
-    navigate("/exam/doing");
+  const handleStartExam = (quiz) => {
+    navigate(`/exam/doing/${quiz.id}`);
   };
 
   return (
     <Box sx={{ p: 3 }}>
       <h1 style={{ textAlign: "center", marginBottom: "20px" }}>Danh sách bài thi</h1>
 
-      {examDetails.length === 0 ? (
+      {quizzes.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "16px" }}>Không có bài thi nào.</p>
       ) : (
         <TableContainer component={Paper} style={{ width: "90%", margin: "auto" }}>
@@ -42,10 +49,13 @@ const ExamPage = () => {
                   Môn học
                 </TableCell>
                 <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
-                  Thời gian
+                  Tên bài thi
                 </TableCell>
                 <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
-                  Mô tả
+                  Thời gian (phút)
+                </TableCell>
+                <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  Số câu hỏi
                 </TableCell>
                 <TableCell align="center" style={{ fontWeight: "bold", fontSize: "16px" }}>
                   Làm bài
@@ -53,31 +63,30 @@ const ExamPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {examDetails.map((exam, index) => (
-                <TableRow key={index}>
+              {quizzes.map((quiz) => (
+                <TableRow key={quiz.id}>
                   <TableCell align="center" style={{ fontSize: "14px" }}>
-                    {exam.subject}
+                    {quiz.subject.subjectName}
                   </TableCell>
                   <TableCell align="center" style={{ fontSize: "14px" }}>
-                    {exam.duration}
+                    {quiz.quizName}
                   </TableCell>
-                  <TableCell align="center" style={{ fontSize: "14px", padding: "10px" }}>
-                    {exam.description}
+                  <TableCell align="center" style={{ fontSize: "14px" }}>
+                    {quiz.duration}
+                  </TableCell>
+                  <TableCell align="center" style={{ fontSize: "14px" }}>
+                    {quiz.totalQuestion}
                   </TableCell>
                   <TableCell align="center">
-                    {/* <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      onClick={() => handleStartExam(exam)}
-                    >
-                      Bắt đầu làm bài
-                    </Button> */}
                     <button
-                      onClick={() => handleStartExam(exam)}
+                      onClick={() => handleStartExam(quiz)}
                       style={{
-                        backgroundColor: "#4CAF50",color: "white",padding: "5px 10px",
-                        border: "none",borderRadius: "5px",cursor: "pointer",
+                        backgroundColor: "#4CAF50",
+                        color: "white",
+                        padding: "5px 10px",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
                       }}
                     >
                       Bắt đầu làm bài

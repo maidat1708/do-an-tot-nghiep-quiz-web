@@ -3,6 +3,7 @@ import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, Ta
   Paper, TextField, FormControl, Select, MenuItem, InputLabel, Grid } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "../../components/Modal";
+import { toast } from 'react-toastify';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -10,6 +11,28 @@ const UserManagement = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
+  // Fetch users khi component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Lấy danh sách người dùng
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/users', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (data.code === 200) {
+        setUsers(data.result);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải danh sách người dùng');
+    }
+  };
 
   // Xử lý mở popup thêm mới
   const handleAdd = () => {
@@ -23,33 +46,65 @@ const UserManagement = () => {
     setModalOpen(true);
   };
 
-   // Hiển thị popup xác nhận xóa
-   const confirmDelete = (index) => {
+  // Hiển thị popup xác nhận xóa
+  const confirmDelete = (index) => {
     setUserToDelete(index);
     setDeleteConfirmOpen(true);
   };
 
   // Xóa người dùng sau khi xác nhận
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (userToDelete !== null) {
-      const updatedUsers = [...users];
-      updatedUsers.splice(userToDelete, 1);
-      setUsers(updatedUsers);
+      try {
+        const response = await fetch(`http://26.184.129.66:8080/api/v1/users/${users[userToDelete].id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          toast.success('Xóa người dùng thành công');
+          fetchUsers(); // Refresh data
+        } else {
+          toast.error('Lỗi khi xóa người dùng');
+        }
+      } catch (error) {
+        toast.error('Lỗi khi xóa người dùng');
+      }
     }
     setDeleteConfirmOpen(false);
     setUserToDelete(null);
   };
 
   // Lưu người dùng sau khi thêm/sửa
-  const handleSave = (data) => {
-    const updatedUsers = [...users];
-    if (editingIndex !== null) {
-      updatedUsers[editingIndex] = data;
-    } else {
-      updatedUsers.push(data);
+  const handleSave = async (data) => {
+    try {
+      const url = editingIndex !== null 
+        ? `http://26.184.129.66:8080/api/v1/users/${users[editingIndex].id}`
+        : 'http://26.184.129.66:8080/api/v1/users';
+      
+      const method = editingIndex !== null ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        toast.success(`${editingIndex !== null ? 'Cập nhật' : 'Thêm'} người dùng thành công`);
+        fetchUsers(); // Refresh data
+        setModalOpen(false);
+      } else {
+        toast.error(`Lỗi khi ${editingIndex !== null ? 'cập nhật' : 'thêm'} người dùng`);
+      }
+    } catch (error) {
+      toast.error(`Lỗi khi ${editingIndex !== null ? 'cập nhật' : 'thêm'} người dùng`);
     }
-    setUsers(updatedUsers);
-    setModalOpen(false);
   };
 
   return (
@@ -73,10 +128,14 @@ const UserManagement = () => {
       
       {/* Modal for Add/Edit User */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
-        <UserForm
-          initialData={editingIndex !== null ? users[editingIndex] : null}
-          onSave={handleSave}
-        />
+        {editingIndex !== null ? (
+          <UserForm
+            initialData={users[editingIndex]}
+            onSave={handleSave}
+          />
+        ) : (
+          <AddUserForm onSave={handleSave} />
+        )}
       </Modal>
 
       {/* Modal for Delete Confirmation */}
@@ -110,19 +169,19 @@ const UserManagement = () => {
 // Component bảng hiển thị danh sách người dùng
 const UserTable = ({ users, onEdit, onDelete }) => {
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} style={{ margin: "auto" }}>
       <Table>
         <TableHead>
           <TableRow style={{background: "#F7F7F7"}}>
             <TableCell>Username</TableCell>
-            <TableCell>First Name</TableCell>
-            <TableCell>Last Name</TableCell>
-            <TableCell>Birthday</TableCell>
-            <TableCell>Gender</TableCell>
+            <TableCell>Họ</TableCell>
+            <TableCell>Tên</TableCell>
             <TableCell>Email</TableCell>
-            <TableCell>Phone Number</TableCell>
-            <TableCell>Address</TableCell>
-            <TableCell>Role</TableCell>
+            <TableCell>Số điện thoại</TableCell>
+            <TableCell>Địa chỉ</TableCell>
+            <TableCell>Ngày sinh</TableCell>
+            <TableCell>Giới tính</TableCell>
+            <TableCell>Vai trò</TableCell>
             <TableCell>Thao tác</TableCell>
           </TableRow>
         </TableHead>
@@ -130,22 +189,22 @@ const UserTable = ({ users, onEdit, onDelete }) => {
           {users.map((user, index) => (
             <TableRow key={index}>
               <TableCell>{user.username}</TableCell>
-              <TableCell>{user.firstName}</TableCell>
-              <TableCell>{user.lastName}</TableCell>
-              <TableCell>{user.birthDay}</TableCell>
-              <TableCell>{user.gender}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.phoneNumber}</TableCell>
-              <TableCell>{user.address}</TableCell>
+              <TableCell>{user.profile.firstName}</TableCell>
+              <TableCell>{user.profile.lastName}</TableCell>
+              <TableCell>{user.profile.email}</TableCell>
+              <TableCell>{user.profile.phoneNumber}</TableCell>
+              <TableCell>{user.profile.address}</TableCell>
+              <TableCell>{user.profile.birthDay}</TableCell>
+              <TableCell>{user.profile.gender === 0 ? "Nam" : "Nữ"}</TableCell>
               <TableCell>{user.role}</TableCell>
               <TableCell>
                 <button
                   onClick={() => onEdit(index)}
                   style={{
                     background: "none",
-                    border: "none",
+                    border: "none", 
                     cursor: "pointer",
-                    color: "#4CAF50", // Màu xanh
+                    color: "#4CAF50",
                     marginRight: "10px",
                   }}
                 >
@@ -156,8 +215,8 @@ const UserTable = ({ users, onEdit, onDelete }) => {
                   style={{
                     background: "none",
                     border: "none",
-                    cursor: "pointer",
-                    color: "#f44336", // Màu đỏ
+                    cursor: "pointer", 
+                    color: "#f44336",
                   }}
                 >
                   <FaTrash size={18} />
@@ -175,28 +234,54 @@ const UserTable = ({ users, onEdit, onDelete }) => {
 const UserForm = ({ initialData, onSave }) => {
   const [formData, setFormData] = useState({
     username: "",
-    firstName: "",
-    lastName: "",
-    birthDay: "",
-    gender: "",
-    email: "",
-    phoneNumber: "",
-    address: "",
-    role: "",
+    password: "",
+    role: "STUDENT",
+    profile: {
+      email: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      birthDay: "",
+      address: "",
+      gender: 0
+    }
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        username: initialData.username || "",
+        role: initialData.role || "STUDENT",
+        profile: {
+          email: initialData.profile?.email || "",
+          firstName: initialData.profile?.firstName || "",
+          lastName: initialData.profile?.lastName || "",
+          phoneNumber: initialData.profile?.phoneNumber || "",
+          birthDay: initialData.profile?.birthDay || "",
+          address: initialData.profile?.address || "",
+          gender: initialData.profile?.gender || 0
+        }
+      });
     }
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData({
+        ...formData,
+        [parent]: {
+          ...formData[parent],
+          [child]: value
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const handleSubmit = (e) => {
@@ -205,9 +290,11 @@ const UserForm = ({ initialData, onSave }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: "500px", margin: "auto" }}>
-      <h2 style={{ textAlign: "center" }}>Thông tin người dùng</h2>
-      <Grid container spacing={1}>
+    <form onSubmit={handleSubmit} style={{ maxWidth: "800px", margin: "auto" }}>
+      <h2 style={{ textAlign: "center" }}>
+        {initialData ? "Sửa thông tin người dùng" : "Thêm người dùng mới"}
+      </h2>
+      <Grid container spacing={2}>
         <Grid item xs={6}>
           <TextField
             label="Username"
@@ -217,35 +304,183 @@ const UserForm = ({ initialData, onSave }) => {
             fullWidth
             margin="normal"
             required
-            sx={{ fontSize: '14px' }}
+            disabled={initialData !== null}
           />
         </Grid>
+        {!initialData && (
+          <Grid item xs={6}>
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              fullWidth
+              margin="normal"
+              required
+            />
+          </Grid>
+        )}
         <Grid item xs={6}>
           <TextField
-            label="First Name"
-            name="firstName"
-            value={formData.firstName}
+            label="Email"
+            name="profile.email"
+            value={formData.profile.email}
             onChange={handleChange}
             fullWidth
             margin="normal"
             required
-            sx={{ fontSize: '14px' }}
           />
         </Grid>
-
         <Grid item xs={6}>
           <TextField
-            label="Last Name"
-            name="lastName"
-            value={formData.lastName}
+            label="Họ"
+            name="profile.firstName"
+            value={formData.profile.firstName}
             onChange={handleChange}
             fullWidth
             margin="normal"
             required
-            sx={{ fontSize: '14px' }}
           />
         </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Tên"
+            name="profile.lastName"
+            value={formData.profile.lastName}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Số điện thoại"
+            name="profile.phoneNumber"
+            value={formData.profile.phoneNumber}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Ngày sinh"
+            name="profile.birthDay"
+            type="date"
+            value={formData.profile.birthDay}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Địa chỉ"
+            name="profile.address"
+            value={formData.profile.address}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Vai trò</InputLabel>
+            <Select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <MenuItem value="ADMIN">Admin</MenuItem>
+              <MenuItem value="STUDENT">Student</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={6}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Giới tính</InputLabel>
+            <Select
+              name="profile.gender"
+              value={formData.profile.gender}
+              onChange={handleChange}
+            >
+              <MenuItem value={0}>Nam</MenuItem>
+              <MenuItem value={1}>Nữ</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
 
+      <Grid container spacing={2} justifyContent="center" style={{ marginTop: "20px" }}>
+        <Grid item xs={6}>
+          <Button 
+            variant="contained" 
+            color="error" 
+            type="submit" 
+            fullWidth
+          >
+            {initialData ? "Cập nhật" : "Thêm mới"}
+          </Button>
+        </Grid>
+      </Grid>
+    </form>
+  );
+};
+
+// Form thêm mới user
+const AddUserForm = ({ onSave }) => {
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "STUDENT"
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ maxWidth: "800px", margin: "auto" }}>
+      <h2 style={{ textAlign: "center" }}>Thêm người dùng mới</h2>
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          <TextField
+            label="Username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            required
+          />
+        </Grid>
         <Grid item xs={6}>
           <TextField
             label="Email"
@@ -255,84 +490,56 @@ const UserForm = ({ initialData, onSave }) => {
             fullWidth
             margin="normal"
             required
-            sx={{ fontSize: '14px' }}
           />
         </Grid>
-
         <Grid item xs={6}>
           <TextField
-            label="Phone Number"
-            name="phoneNumber"
-            value={formData.phoneNumber}
+            label="Họ"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
             fullWidth
             margin="normal"
-            sx={{ fontSize: '14px' }}
+            required
           />
         </Grid>
-
         <Grid item xs={6}>
           <TextField
-            label="Birthday"
-            name="birthDay"
-            value={formData.birthDay}
+            label="Tên"
+            name="lastName"
+            value={formData.lastName}
             onChange={handleChange}
             fullWidth
             margin="normal"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            sx={{ fontSize: '14px' }}
+            required
           />
         </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            label="Address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            sx={{ fontSize: '14px' }}
-          />
-        </Grid>
-
         <Grid item xs={6}>
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel>Role</InputLabel>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="role-label">Vai trò</InputLabel>
             <Select
+              labelId="role-label"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              sx={{ fontSize: '14px' }}
+              label="Vai trò"
             >
-              <MenuItem value="ADMIN">admin</MenuItem>
-              <MenuItem value="STUDENT">student</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={6}>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Gender</InputLabel>
-            <Select
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              sx={{ fontSize: '14px' }}
-            >
-              <MenuItem value={0}>Nam</MenuItem>
-              <MenuItem value={1}>Nữ</MenuItem>
+              <MenuItem value="ADMIN">Admin</MenuItem>
+              <MenuItem value="STUDENT">Student</MenuItem>
             </Select>
           </FormControl>
         </Grid>
       </Grid>
 
-      <Grid container spacing={1} justifyContent="center" style={{ marginTop: '20px' }}>
-        <Grid item xs={2}>
+      <Grid container spacing={2} justifyContent="center" style={{ marginTop: "20px" }}>
+        <Grid item xs={6}>
           <Button 
-            variant="contained" color="error" type="submit" fullWidth>
-            Lưu
+            variant="contained" 
+            color="error" 
+            type="submit" 
+            fullWidth
+          >
+            Thêm mới
           </Button>
         </Grid>
       </Grid>
