@@ -68,17 +68,19 @@ const UserManagement = () => {
         if (response.ok) {
           toast.success('Xóa người dùng thành công');
           fetchUsers(); // Refresh data
+          // Kiểm tra lại số trang sau khi cập nhật danh sách xóa
+          const updatedUsers = users;
+          const totalPagesAfterDelete = Math.ceil(updatedUsers.length / pageSize);
+          
+          // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+          if (currentPage > totalPagesAfterDelete) {
+            setCurrentPage(totalPagesAfterDelete);
+          }
         } else {
           toast.error('Lỗi khi xóa người dùng');
         }
       } catch (error) {
         toast.error('Lỗi khi xóa người dùng');
-      }
-      // Kiểm tra tổng số trang sau khi xóa
-      const totalPagesAfterDelete = Math.ceil(updatedUsers.length / pageSize);
-      // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
-      if (currentPage > totalPagesAfterDelete) {
-        setCurrentPage(totalPagesAfterDelete);
       }
     }
     setDeleteConfirmOpen(false);
@@ -231,8 +233,8 @@ const UserTable = ({ users, onEdit, onDelete, currentPage, pageSize }) => {
         <TableHead>
           <TableRow style={{background: "#F7F7F7"}}>
             <TableCell>Username</TableCell>
-            <TableCell>Họ</TableCell>
             <TableCell>Tên</TableCell>
+            <TableCell>Họ</TableCell>
             <TableCell>Email</TableCell>
             <TableCell>Số điện thoại</TableCell>
             <TableCell>Địa chỉ</TableCell>

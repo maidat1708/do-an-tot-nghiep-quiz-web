@@ -136,17 +136,19 @@ const QuestionManagement = () => {
         if (response.ok) {
           toast.success('Xóa câu hỏi thành công');
           fetchQuestions();
+          // Kiểm tra lại số trang sau khi cập nhật danh sách xóa
+          const updatedQuestions = questions;
+          const totalPagesAfterDelete = Math.ceil(updatedQuestions.length / pageSize);
+
+          // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+          if (currentPage > totalPagesAfterDelete) {
+            setCurrentPage(totalPagesAfterDelete);
+          }
         } else {
           toast.error('Lỗi khi xóa câu hỏi');
         }
       } catch (error) {
         toast.error('Lỗi khi xóa câu hỏi');
-      }
-      // Kiểm tra tổng số trang sau khi xóa
-      const totalPagesAfterDelete = Math.ceil(updatedQuestions.length / pageSize);
-      // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
-      if (currentPage > totalPagesAfterDelete) {
-        setCurrentPage(totalPagesAfterDelete);
       }
     }
   };
@@ -339,7 +341,7 @@ const QuestionManagement = () => {
                     ))}
                     <TableCell>
                       <button
-                        onClick={() => handleOpen(globalIndex)}
+                        onClick={() => handleOpen(question)}
                         style={{
                           background: "none",
                           border: "none",

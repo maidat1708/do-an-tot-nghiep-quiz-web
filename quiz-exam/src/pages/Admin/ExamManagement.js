@@ -221,17 +221,19 @@ const ExamManagement = () => {
         if (response.ok) {
           toast.success('Xóa đề thi thành công');
           fetchExams();
+          // Kiểm tra lại số trang sau khi cập nhật danh sách xóa
+          const updatedExams = exams; 
+          const totalPagesAfterDelete = Math.ceil(updatedExams.length / pageSize);
+
+          // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+          if (currentPage > totalPagesAfterDelete) {
+            setCurrentPage(totalPagesAfterDelete);
+          }
         } else {
           toast.error('Lỗi khi xóa đề thi');
         }
       } catch (error) {
         toast.error('Lỗi khi xóa đề thi');
-      }
-      // Kiểm tra tổng số trang sau khi xóa
-      const totalPagesAfterDelete = Math.ceil(updatedExams.length / pageSize);
-      // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
-      if (currentPage > totalPagesAfterDelete) {
-        setCurrentPage(totalPagesAfterDelete);
       }
     }
   };
@@ -550,7 +552,7 @@ const ExamManagement = () => {
                     </TableCell>
                     <TableCell>
                       <button
-                        onClick={() => handleEditExam(globalIndex)}
+                        onClick={() => handleEditExam(exam)}
                         style={{
                           background: "none",
                           border: "none",

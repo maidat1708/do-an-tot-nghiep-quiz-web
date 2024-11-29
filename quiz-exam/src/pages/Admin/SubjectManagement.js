@@ -67,17 +67,19 @@ const SubjectManagement = () => {
       if (response.ok) {
         toast.success('Xóa môn học thành công');
         fetchSubjects(); // Refresh data
+        // Kiểm tra lại số trang sau khi cập nhật danh sách xóa
+        const updatedSubjects = subjects;
+        const totalPagesAfterDelete = Math.ceil(updatedSubjects.length / pageSize);
+        
+        // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+        if (currentPage > totalPagesAfterDelete) {
+          setCurrentPage(totalPagesAfterDelete);
+        }
       } else {
         toast.error('Lỗi khi xóa môn học');
       }
     } catch (error) {
       toast.error('Lỗi khi xóa môn học');
-    }
-    // Kiểm tra tổng số trang sau khi xóa
-    const totalPagesAfterDelete = Math.ceil(updatedSubjects.length / pageSize);
-    // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
-    if (currentPage > totalPagesAfterDelete) {
-      setCurrentPage(totalPagesAfterDelete);
     }
     setDeleteConfirmOpen(false);
   };
