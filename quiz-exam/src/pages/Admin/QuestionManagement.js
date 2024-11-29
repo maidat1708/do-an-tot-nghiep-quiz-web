@@ -370,7 +370,7 @@ const QuestionManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredQuestions.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+        {filteredQuestions.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination

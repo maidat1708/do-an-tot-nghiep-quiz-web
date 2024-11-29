@@ -155,7 +155,7 @@ const UserManagement = () => {
         pageSize={pageSize} // Truyền số lượng hiển thị mỗi trang
       />
       
-      {users.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+      {users.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination

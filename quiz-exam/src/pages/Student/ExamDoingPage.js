@@ -43,13 +43,17 @@ const ExamDoingPage = () => {
   }, [quizId]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      toast.warning('Hết thời gian làm bài');
-      handleSubmit();
-    }
-    if (!showResultsModal && timeLeft > 0) {
+    if (quiz && !showResultsModal && timeLeft > 0) {
       timer.current = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timer.current);
+            toast.warning('Hết thời gian làm bài');
+            handleSubmit(); // Nộp bài khi hết giờ
+            return 0; // Đảm bảo không giảm xuống âm
+          }
+          return prevTime - 1;
+        });
       }, 1000);
     }
 
@@ -200,10 +204,10 @@ const ExamDoingPage = () => {
                   </>
                 )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                <Button variant="contained" color="primary" disabled={selectedQuestion.id === 1} onClick={handleBack}>
+                <Button variant="contained" color="primary" disabled={questions.findIndex(q => q.id === selectedQuestion?.id) === 0} onClick={handleBack}>
                   &lt; Quay lại
                 </Button>
-                <Button variant="contained" color="primary" disabled={selectedQuestion.id === questions.length} onClick={handleNext}>
+                <Button variant="contained" color="primary" disabled={questions.findIndex(q => q.id === selectedQuestion?.id) === questions.length - 1} onClick={handleNext}>
                   Tiếp theo &gt;
                 </Button>
               </Box>
@@ -242,7 +246,7 @@ const ExamDoingPage = () => {
                     >
                       <ListItemText primary={`Câu ${index + 1}`} />
                       {answers[question.id] && (
-                        <Typography variant="body2" color="success.main">✓</Typography>
+                        <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold', marginLeft: '8px'}}>✔</Typography>
                       )}
                     </ListItem>
                   ))}

@@ -13,7 +13,7 @@ const SubjectManagement = () => {
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
   const [pageSize, setPageSize] = useState(5); // Số lượng hiển thị mỗi trang
-  
+ 
   // Fetch subjects khi component mount
   useEffect(() => {
     fetchSubjects();
@@ -123,8 +123,10 @@ const SubjectManagement = () => {
   const totalPages = Math.ceil(subjects.length / pageSize); // Tổng số trang
 
   // Xử lý thay đổi trang
-  const handlePageChange = (event, value) => setCurrentPage(value);
-
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+    fetchSubjects(); // Lấy lại dữ liệu cho trang mới
+  };
   // Xử lý thay đổi số lượng hiển thị
   const handlePageSizeChange = (event) => {
     setPageSize(event.target.value);
@@ -148,7 +150,7 @@ const SubjectManagement = () => {
         currentPage={currentPage} // Truyền trang hiện tại
         pageSize={pageSize} // Truyền số lượng hiển thị mỗi trang
       />
-      {subjects.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+      {subjects.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination

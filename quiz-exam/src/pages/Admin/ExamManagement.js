@@ -1,57 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,
-  DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Collapse,Box,List,ListItem,
+  DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Box,List,ListItem,
   ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination} from '@mui/material';
-import { KeyboardArrowDown, KeyboardArrowUp, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ExamPopup from "../../components/ExamPopup";
-
-// Component con để hiển thị chi tiết câu hỏi
-const QuestionRow = ({ question }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <TableRow>
-        <TableCell>
-          <IconButton size="small" onClick={() => setOpen(!open)}>
-            {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-          </IconButton>
-        </TableCell>
-        <TableCell colSpan={6}>{question.questionText}</TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Các đáp án
-              </Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Đáp án</TableCell>
-                    <TableCell>Đúng/Sai</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {question.answerHistories.map((answer) => (
-                    <TableRow key={answer.id}>
-                      <TableCell>{answer.answerText}</TableCell>
-                      <TableCell>{answer.isCorrect === 1 ? 'Đúng' : 'Sai'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
-    </>
-  );
-};
 
 const ExamManagement = () => {
   const [exams, setExams] = useState([]);
@@ -581,7 +536,7 @@ const ExamManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredExams.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+        {filteredExams.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination
