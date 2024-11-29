@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, TextField, FormControl, Select, MenuItem, InputLabel, Grid } from '@mui/material';
+  Paper, TextField, FormControl, Select, MenuItem, InputLabel, Grid, Pagination } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "../../components/Modal";
 import { toast } from 'react-toastify';
@@ -11,7 +11,9 @@ const UserManagement = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize, setPageSize] = useState(5); // Số lượng hiển thị mỗi trang
+  
   // Fetch users khi component mount
   useEffect(() => {
     fetchUsers();
@@ -41,14 +43,14 @@ const UserManagement = () => {
   };
 
   // Xử lý chỉnh sửa
-  const handleEdit = (index) => {
-    setEditingIndex(index);
+  const handleEdit = (globalIndex) => {
+    setEditingIndex(globalIndex);
     setModalOpen(true);
   };
 
   // Hiển thị popup xác nhận xóa
-  const confirmDelete = (index) => {
-    setUserToDelete(index);
+  const confirmDelete = (globalIndex) => {
+    setUserToDelete(globalIndex);
     setDeleteConfirmOpen(true);
   };
 
@@ -71,6 +73,12 @@ const UserManagement = () => {
         }
       } catch (error) {
         toast.error('Lỗi khi xóa người dùng');
+      }
+      // Kiểm tra tổng số trang sau khi xóa
+      const totalPagesAfterDelete = Math.ceil(updatedUsers.length / pageSize);
+      // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+      if (currentPage > totalPagesAfterDelete) {
+        setCurrentPage(totalPagesAfterDelete);
       }
     }
     setDeleteConfirmOpen(false);
@@ -107,6 +115,23 @@ const UserManagement = () => {
     }
   };
 
+  // Tính toán dữ liệu phân trang
+  const paginatedUsers = users.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const totalPages = Math.ceil(users.length / pageSize); // Tổng số trang
+
+  // Xử lý thay đổi trang
+  const handlePageChange = (event, value) => setCurrentPage(value);
+
+  // Xử lý thay đổi số lượng hiển thị
+  const handlePageSizeChange = (event) => {
+    setPageSize(event.target.value);
+    setCurrentPage(1); // Reset về trang đầu tiên
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <button 
@@ -121,11 +146,43 @@ const UserManagement = () => {
       </button>
 
       <UserTable 
-        users={users} 
+        users={paginatedUsers} 
         onEdit={handleEdit} 
         onDelete={confirmDelete} 
+        currentPage={currentPage} // Truyền trang hiện tại
+        pageSize={pageSize} // Truyền số lượng hiển thị mỗi trang
       />
       
+      {users.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+        <>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
+            <Pagination
+              count={totalPages} 
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{ mr: 2, display: 'flex', justifyContent: 'center' }}
+            />
+            <Select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              size="small"
+              sx={{ minWidth: "100px" }}
+            >
+              {[5, 10, 20, 30, 40, 50].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size} / trang
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </>
+      ) : ( // Nếu danh sách trống thì hiển thị thông báo
+        <Box sx={{ textAlign: "center", mt: 5 }}>
+          <p>Hiện tại chưa có dữ liệu người dùng.</p>
+        </Box>
+      )}
+
       {/* Modal for Add/Edit User */}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         {editingIndex !== null ? (
@@ -167,7 +224,7 @@ const UserManagement = () => {
 };
 
 // Component bảng hiển thị danh sách người dùng
-const UserTable = ({ users, onEdit, onDelete }) => {
+const UserTable = ({ users, onEdit, onDelete, currentPage, pageSize }) => {
   return (
     <TableContainer component={Paper} style={{ margin: "auto" }}>
       <Table>
@@ -186,44 +243,47 @@ const UserTable = ({ users, onEdit, onDelete }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.map((user, index) => (
-            <TableRow key={index}>
-              <TableCell>{user.username}</TableCell>
-              <TableCell>{user.profile.firstName}</TableCell>
-              <TableCell>{user.profile.lastName}</TableCell>
-              <TableCell>{user.profile.email}</TableCell>
-              <TableCell>{user.profile.phoneNumber}</TableCell>
-              <TableCell>{user.profile.address}</TableCell>
-              <TableCell>{user.profile.birthDay}</TableCell>
-              <TableCell>{user.profile.gender === 0 ? "Nam" : "Nữ"}</TableCell>
-              <TableCell>{user.role}</TableCell>
-              <TableCell>
-                <button
-                  onClick={() => onEdit(index)}
-                  style={{
-                    background: "none",
-                    border: "none", 
-                    cursor: "pointer",
-                    color: "#4CAF50",
-                    marginRight: "10px",
-                  }}
-                >
-                  <FaEdit size={18} />
-                </button>
-                <button
-                  onClick={() => onDelete(index)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer", 
-                    color: "#f44336",
-                  }}
-                >
-                  <FaTrash size={18} />
-                </button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {users.map((user, localIndex) => {
+            const globalIndex = (currentPage - 1) * pageSize + localIndex;
+            return (
+              <TableRow key={globalIndex}>
+                <TableCell>{user.username}</TableCell>
+                <TableCell>{user.profile.firstName}</TableCell>
+                <TableCell>{user.profile.lastName}</TableCell>
+                <TableCell>{user.profile.email}</TableCell>
+                <TableCell>{user.profile.phoneNumber}</TableCell>
+                <TableCell>{user.profile.address}</TableCell>
+                <TableCell>{user.profile.birthDay}</TableCell>
+                <TableCell>{user.profile.gender === 0 ? "Nam" : "Nữ"}</TableCell>
+                <TableCell>{user.role}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => onEdit(globalIndex)}
+                    style={{
+                      background: "none",
+                      border: "none", 
+                      cursor: "pointer",
+                      color: "#4CAF50",
+                      marginRight: "10px",
+                    }}
+                  >
+                    <FaEdit size={18} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(globalIndex)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer", 
+                      color: "#f44336",
+                    }}
+                  >
+                    <FaTrash size={18} />
+                  </button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>

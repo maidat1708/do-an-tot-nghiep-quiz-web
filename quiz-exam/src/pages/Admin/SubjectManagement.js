@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Box, Paper, Table, TableBody, TableCell,TableContainer,TableHead,TableRow, TextField, Button } from '@mui/material';
+import { Grid, Box, Paper, Table, TableBody, TableCell,TableContainer,TableHead,TableRow, 
+  TextField, Button, Pagination, Select, MenuItem } from '@mui/material';
 import { FaEdit, FaTrash } from "react-icons/fa"; // Import icons
 import Modal from "../../components/Modal"; // Import modal component
 import { toast } from 'react-toastify';
@@ -10,7 +11,9 @@ const SubjectManagement = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
-
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize, setPageSize] = useState(5); // Số lượng hiển thị mỗi trang
+  
   // Fetch subjects khi component mount
   useEffect(() => {
     fetchSubjects();
@@ -40,14 +43,14 @@ const SubjectManagement = () => {
   };
 
   // Xử lý chỉnh sửa
-  const handleEdit = (index) => {
-    setEditingIndex(index);
+  const handleEdit = (globalIndex) => {
+    setEditingIndex(globalIndex);
     setModalOpen(true);
   };
 
   // Hiển thị popup xác nhận xóa
-  const handleDeleteClick = (index) => {
-    setDeleteIndex(index);
+  const handleDeleteClick = (globalIndex) => {
+    setDeleteIndex(globalIndex);
     setDeleteConfirmOpen(true);
   };
 
@@ -69,6 +72,12 @@ const SubjectManagement = () => {
       }
     } catch (error) {
       toast.error('Lỗi khi xóa môn học');
+    }
+    // Kiểm tra tổng số trang sau khi xóa
+    const totalPagesAfterDelete = Math.ceil(updatedSubjects.length / pageSize);
+    // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+    if (currentPage > totalPagesAfterDelete) {
+      setCurrentPage(totalPagesAfterDelete);
     }
     setDeleteConfirmOpen(false);
   };
@@ -103,6 +112,23 @@ const SubjectManagement = () => {
     }
   };
 
+  // Tính toán dữ liệu phân trang
+  const paginatedSubjects = subjects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const totalPages = Math.ceil(subjects.length / pageSize); // Tổng số trang
+
+  // Xử lý thay đổi trang
+  const handlePageChange = (event, value) => setCurrentPage(value);
+
+  // Xử lý thay đổi số lượng hiển thị
+  const handlePageSizeChange = (event) => {
+    setPageSize(event.target.value);
+    setCurrentPage(1); // Reset về trang đầu tiên
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <button
@@ -114,10 +140,41 @@ const SubjectManagement = () => {
         + Thêm mới
       </button>
       <SubjectTable
-        subjects={subjects}
+        subjects={paginatedSubjects}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        currentPage={currentPage} // Truyền trang hiện tại
+        pageSize={pageSize} // Truyền số lượng hiển thị mỗi trang
       />
+      {subjects.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+        <>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
+            <Pagination
+              count={totalPages} 
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{ mr: 2, display: 'flex', justifyContent: 'center' }}
+            />
+            <Select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              size="small"
+              sx={{ minWidth: "100px" }}
+            >
+              {[5, 10, 20, 30, 40, 50].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size} / trang
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </>
+      ) : ( // Nếu danh sách trống thì hiển thị thông báo
+        <Box sx={{ textAlign: "center", mt: 5 }}>
+          <p>Hiện tại chưa có dữ liệu môn học.</p>
+        </Box>
+      )}
       <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
         <SubjectForm
           initialData={editingIndex !== null ? subjects[editingIndex] : null}
@@ -148,7 +205,7 @@ const SubjectManagement = () => {
 };
 
 // Component bảng hiển thị danh sách môn học
-const SubjectTable = ({ subjects, onEdit, onDelete }) => {
+const SubjectTable = ({ subjects, onEdit, onDelete, currentPage, pageSize }) => {
   return (
     <TableContainer component={Paper} style={{ width: "50%", margin: "auto", textAlign: "center", justifyContent: "center" }}>
       <Table>
@@ -160,37 +217,40 @@ const SubjectTable = ({ subjects, onEdit, onDelete }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {subjects.map((subject, index) => (
-            <TableRow key={index}>
-              <TableCell>{subject.subjectName}</TableCell>
-              <TableCell>{subject.description || `MH${subject.id}`}</TableCell>
-              <TableCell>
-                <button
-                  onClick={() => onEdit(index)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#4CAF50",
-                    marginRight: "10px",
-                  }}
-                >
-                  <FaEdit size={18} />
-                </button>
-                <button
-                  onClick={() => onDelete(index)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#f44336",
-                  }}
-                >
-                  <FaTrash size={18} />
-                </button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {subjects.map((subject, localIndex) => {
+            const globalIndex = (currentPage - 1) * pageSize + localIndex;
+            return (
+              <TableRow key={globalIndex}>
+                <TableCell>{subject.subjectName}</TableCell>
+                <TableCell>{subject.description || `MH${subject.id}`}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => onEdit(globalIndex)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#4CAF50",
+                      marginRight: "10px",
+                    }}
+                  >
+                    <FaEdit size={18} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(globalIndex)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#f44336",
+                    }}
+                  >
+                    <FaTrash size={18} />
+                  </button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Collapse,Box,List,ListItem,ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,} from '@mui/material';
+import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,
+  DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Collapse,Box,List,ListItem,
+  ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination} from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
@@ -88,6 +90,8 @@ const ExamManagement = () => {
       { answerText: '', isCorrect: 0 }
     ]
   });
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const [pageSize, setPageSize] = useState(5); // Số lượng hiển thị mỗi trang
 
   // Lấy danh sách đề thi
   const fetchExams = async () => {
@@ -222,6 +226,12 @@ const ExamManagement = () => {
         }
       } catch (error) {
         toast.error('Lỗi khi xóa đề thi');
+      }
+      // Kiểm tra tổng số trang sau khi xóa
+      const totalPagesAfterDelete = Math.ceil(updatedExams.length / pageSize);
+      // Nếu trang hiện tại lớn hơn tổng số trang, chuyển về trang cuối
+      if (currentPage > totalPagesAfterDelete) {
+        setCurrentPage(totalPagesAfterDelete);
       }
     }
   };
@@ -443,6 +453,22 @@ const ExamManagement = () => {
     setIsPopupOpen(false);
     setSelectedExam(null);
   };
+  // Tính toán dữ liệu phân trang
+  const paginatedExams = filteredExams.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const totalPages = Math.ceil(filteredExams.length / pageSize); // Tổng số trang
+
+  // Xử lý thay đổi trang
+  const handlePageChange = (event, value) => setCurrentPage(value);
+
+  // Xử lý thay đổi số lượng hiển thị
+  const handlePageSizeChange = (event) => {
+    setPageSize(event.target.value);
+    setCurrentPage(1); // Reset về trang đầu tiên
+  };
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
@@ -494,7 +520,10 @@ const ExamManagement = () => {
         </button>
     
         <TableContainer component={Paper}>
-          <Table>
+          <Table
+            exams={paginatedExams} 
+            currentPage={currentPage} // Truyền trang hiện tại
+            pageSize={pageSize} >
             <TableHead>
               <TableRow style={{background: "#F7F7F7"}}>
                 <TableCell>Tên đề thi</TableCell>
@@ -506,47 +535,79 @@ const ExamManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredExams.map((exam) => (
-                <TableRow key={exam.id}>
-                  <TableCell>{exam.quizName}</TableCell>
-                  <TableCell>{exam.subject.subjectName}</TableCell>
-                  <TableCell>{exam.duration}</TableCell>
-                  <TableCell>{exam.totalQuestion}</TableCell>
-                  <TableCell >
-                    <IconButton onClick={() => handlePreviewClick(exam)}>
-                      <VisibilityIcon color="primary" />
-                    </IconButton>
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => handleEditExam(exam)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#4CAF50", // Màu xanh
-                        marginRight: "10px",
-                      }}
-                    >
-                      <FaEdit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteExam(exam.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#f44336", // Màu đỏ
-                      }}
-                    >
-                      <FaTrash size={18} />
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredExams.map((exam, localIndex) => {
+                const globalIndex = (currentPage - 1) * pageSize + localIndex;
+                return (
+                  <TableRow key={globalIndex}>
+                    <TableCell>{exam.quizName}</TableCell>
+                    <TableCell>{exam.subject.subjectName}</TableCell>
+                    <TableCell>{exam.duration}</TableCell>
+                    <TableCell>{exam.totalQuestion}</TableCell>
+                    <TableCell >
+                      <IconButton onClick={() => handlePreviewClick(exam)}>
+                        <VisibilityIcon color="primary" />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleEditExam(globalIndex)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#4CAF50", // Màu xanh
+                          marginRight: "10px",
+                        }}
+                      >
+                        <FaEdit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExam(exam.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#f44336", // Màu đỏ
+                        }}
+                      >
+                        <FaTrash size={18} />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
+        {filteredExams.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị bảng
+        <>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
+            <Pagination
+              count={totalPages} 
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{ mr: 2, display: 'flex', justifyContent: 'center' }}
+            />
+            <Select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              size="small"
+              sx={{ minWidth: "100px" }}
+            >
+              {[5, 10, 20, 30, 40, 50].map((size) => (
+                <MenuItem key={size} value={size}>
+                  {size} / trang
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </>
+        ) : ( // Nếu danh sách trống thì hiển thị thông báo
+          <Box sx={{ textAlign: "center", mt: 5 }}>
+            <p>Hiện tại chưa có dữ liệu bài thi.</p>
+          </Box>
+        )}
 
         {/* Dialog tạo đề thi mới */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
