@@ -2,6 +2,7 @@ package com.example.samuel_quiz.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +57,14 @@ public class ResultController {
     public APIResponse<Void> deleteResult(@PathVariable Long id) {
         resultService.deleteResult(id);
         return APIResponse.<Void>builder().build();
+    }
+
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Lấy kết quả thi theo userId")
+    public APIResponse<List<ResultResponse>> getResultsByUserId(@PathVariable String userId) {
+        return APIResponse.<List<ResultResponse>>builder()
+                .result(resultService.getResultsByUserId(userId))
+                .build();
     }
 
 }

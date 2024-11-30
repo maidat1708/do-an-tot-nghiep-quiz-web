@@ -18,6 +18,7 @@ const ExamDoingPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [examResult, setExamResult] = useState(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+  const [timeStart, setTimeStart] = useState(null);
 
   const fetchQuizData = async () => {
     try {
@@ -32,6 +33,7 @@ const ExamDoingPage = () => {
         setQuestions(data.result.questionHistories);
         setSelectedQuestion(data.result.questionHistories[0]);
         setTimeLeft(data.result.duration * 60);
+        setTimeStart(new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString());
       }
     } catch (error) {
       toast.error('Lỗi khi tải thông tin bài thi');
@@ -92,12 +94,21 @@ const ExamDoingPage = () => {
 
   const handleSubmit = async () => {
     try {
+      if (!timeStart) {
+        toast.error('Lỗi: Không xác định được thời gian bắt đầu làm bài');
+        return;
+      }
+
       const submitData = {
         quizId: parseInt(quizId),
-        answers: Object.values(answers)
+        timeStart: timeStart,
+        submissions: Object.entries(answers).map(([questionId, answer]) => ({
+          questionId: parseInt(questionId),
+          selectedAnswerIds: [parseInt(answer.answerId)]
+        }))
       };
 
-      const response = await fetch('http://26.184.129.66:8080/api/v1/quiz-histories', {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/quizzes/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,13 +119,29 @@ const ExamDoingPage = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setExamResult(result.result);
-        setShowResultsModal(true);
-        if (timer.current) clearInterval(timer.current);
+        if (result.code === 200) {
+          // Đóng dialog xác nhận
+          setOpenDialog(false);
+          
+          // Dừng timer
+          if (timer.current) {
+            clearInterval(timer.current);
+          }
+
+          // Set kết quả và hiển thị modal
+          setExamResult(result.result);
+          setShowResultsModal(true);
+
+          // Log kết quả để debug
+          console.log('Exam result:', result.result);
+        } else {
+          toast.error('Có lỗi xảy ra khi nộp bài');
+        }
       } else {
         toast.error('Lỗi khi nộp bài thi');
       }
     } catch (error) {
+      console.error('Submit error:', error);
       toast.error('Lỗi khi nộp bài thi');
     }
   };
@@ -259,16 +286,21 @@ const ExamDoingPage = () => {
       )}
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Bạn chắc chắn muốn nộp bài?</DialogTitle>
+        <DialogTitle>Xác nhận nộp bài</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Bạn sẽ không thể thay đổi câu trả lời sau khi nộp bài.
+            Bạn đã trả lời {Object.keys(answers).length}/{questions.length} câu hỏi.
+          </Typography>
+          <Typography variant="body1">
+            Bạn có chắc chắn muốn nộp bài?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}  color="primary">Hủy</Button>
-          <Button onClick={handleSubmit} color="success">
-            Đồng ý
+          <Button onClick={() => setOpenDialog(false)} color="primary">
+            Hủy
+          </Button>
+          <Button onClick={handleSubmit} color="success" variant="contained">
+            Nộp bài
           </Button>
         </DialogActions>
       </Dialog>
@@ -276,10 +308,7 @@ const ExamDoingPage = () => {
       {showResultsModal && examResult && (
         <ResultsModal
           open={showResultsModal}
-          onClose={() => {
-            setShowResultsModal(false);
-            navigate('/exam');
-          }}
+          onClose={handleCloseResultsModal}
           result={examResult}
         />
       )}

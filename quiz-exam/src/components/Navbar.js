@@ -92,6 +92,7 @@ const Navbar = () => {
                   <Button color="inherit" component={Link} to="/manage-questions" sx={{ mx: 2 }}>Câu hỏi</Button>
                   <Button color="inherit" component={Link} to="/manage-exams" sx={{ mx: 2 }}>Đề thi</Button>
                   <Button color="inherit" component={Link} to="/manage-results" sx={{ mx: 2 }}>Điểm thi</Button>
+                  <Button color="inherit" component={Link} to="/manage-templates" sx={{ mx: 2 }}>Template</Button>
                 </>
               ) : (
                 <>

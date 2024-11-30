@@ -9,6 +9,7 @@ import SubjectManagementPage from '../pages/Admin/SubjectManagement';
 import QuestionManagementPage from '../pages/Admin/QuestionManagement';
 import ExamManagementPage from '../pages/Admin/ExamManagement';
 import ResultsManagementPage from '../pages/Admin/ResultsManagement';
+import TemplateManagementPage from '../pages/Admin/TemplateManagementPage';
 import { useAuth } from '../hooks/useAuth';
 
 const AppRoutes = () => {
@@ -111,6 +112,14 @@ const AppRoutes = () => {
           </AdminRoute>
         }
       />
+      <Route 
+        path="/manage-templates" 
+        element={
+          <AdminRoute>
+          <TemplateManagementPage />
+          </AdminRoute>
+        }
+       />
 
       {/* Điều hướng về trang chủ nếu đường dẫn không tồn tại */}
       <Route path="*" element={<Navigate to="/" />} />

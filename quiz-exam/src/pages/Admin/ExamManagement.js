@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,
   DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Box,List,ListItem,
-  ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination} from '@mui/material';
+  ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination,Tooltip} from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ExamPopup from "../../components/ExamPopup";
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormLabel from '@mui/material/FormLabel';
 
 const ExamManagement = () => {
   const [exams, setExams] = useState([]);
@@ -47,6 +52,14 @@ const ExamManagement = () => {
   });
   const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
   const [pageSize, setPageSize] = useState(5); // Số lượng hiển thị mỗi trang
+  const [openImportDialog, setOpenImportDialog] = useState(false);
+  const [importFormData, setImportFormData] = useState({
+    subjectId: '',
+    quizName: '',
+    duration: '',
+    file: null
+  });
+  const [importType, setImportType] = useState('excel'); // 'excel', 'word', 'pdf'
 
   // Lấy danh sách đề thi
   const fetchExams = async () => {
@@ -207,7 +220,7 @@ const ExamManagement = () => {
         const data = await response.json();
         const examDetail = data.result;
         
-        // Cập nhật form data với thông tin đề thi và câu hỏi
+        // Cập nhật form data v��i thông tin đề thi và câu hỏi
         setEditFormData({
           id: exam.id,
           quizName: examDetail.quizName,
@@ -427,6 +440,86 @@ const ExamManagement = () => {
     setCurrentPage(1); // Reset về trang đầu tiên
   };
 
+  // Hàm xử lý export đề thi
+  const handleExportExam = async (examId) => {
+    try {
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/quizzes/${examId}/export`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `exam_${examId}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Xuất đề thi thành công');
+      } else {
+        toast.error('Lỗi khi xuất đề thi');
+      }
+    } catch (error) {
+      console.error('Error exporting exam:', error);
+      toast.error('Lỗi khi xuất đề thi');
+    }
+  };
+
+  // Hàm xử lý import đề thi
+  const handleImportExam = async () => {
+    if (!importFormData.file) return;
+
+    const formData = new FormData();
+    formData.append('file', importFormData.file);
+    formData.append('subjectId', importFormData.subjectId);
+    formData.append('quizName', importFormData.quizName);
+    formData.append('duration', importFormData.duration);
+
+    let importUrl = 'http://26.184.129.66:8080/api/v1/quizzes/';
+    switch(importType) {
+      case 'excel':
+        importUrl += 'import-excel';
+        break;
+      case 'word':
+        importUrl += 'import-word';
+        break;
+      case 'pdf':
+        importUrl += 'import-pdf';
+        break;
+    }
+
+    try {
+      const response = await fetch(importUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        toast.success('Import đề thi thành công');
+        fetchExams();
+        setOpenImportDialog(false);
+        setImportFormData({
+          subjectId: '',
+          quizName: '',
+          duration: '',
+          file: null
+        });
+      } else {
+        toast.error('Lỗi khi import đề thi');
+      }
+    } catch (error) {
+      console.error('Error importing exam:', error);
+      toast.error('Lỗi khi import đề thi');
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
@@ -440,7 +533,7 @@ const ExamManagement = () => {
           textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', marginBottom: '10px',
         }}
         >
-          Ngân hàng câu hỏi
+          Môn học
         </Box>
         {subjects.map((subject) => (
           <Box
@@ -451,7 +544,7 @@ const ExamManagement = () => {
               textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', // Hiệu ứng bóng
               '&:hover': {
                 backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#e0e0e0', // Hover vẫn giữ được màu nếu chọn
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)', // Hiệu ứng bóng khi hover
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)', // Hiệu ứng bng khi hover
               },
             }}
             onClick={() => setSelectedSubjectId(subject.id)}
@@ -465,16 +558,29 @@ const ExamManagement = () => {
 
       {/* Main Content */}
       <Box sx={{ flex: 1,p: 3 }}>
-        <button
-          onClick={() => setOpenDialog(true)}
-          sx={{ mb: 2 }}
-          style={{
-            backgroundColor: '#d30000', color: 'white', padding: '10px 20px', border: 'none',
-            borderRadius: '5px', marginBottom: '30px', cursor: 'pointer'
-          }}
-        >
-          Tạo đề thi mới
-        </button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpenDialog(true)}
+              startIcon={<AddIcon />}
+            >
+              Thêm đề thi
+            </Button>
+            
+            <Tooltip title="Import đề thi">
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => setOpenImportDialog(true)}
+                startIcon={<FileUploadIcon />}
+              >
+                Import
+              </Button>
+            </Tooltip>
+          </Box>
+        </Box>
     
         <TableContainer component={Paper}>
           <Table
@@ -529,6 +635,14 @@ const ExamManagement = () => {
                       >
                         <FaTrash size={18} />
                       </button>
+                      <Tooltip title="Xuất đề thi">
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleExportExam(exam.id)}
+                        >
+                          <FileDownloadIcon />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );
@@ -832,6 +946,91 @@ const ExamManagement = () => {
         </Dialog>
         {/* Popup show bài thi xem trước*/}
         <ExamPopup open={isPopupOpen} onClose={handleClosePopup} examData={selectedExam} />
+
+        <Dialog open={openImportDialog} onClose={() => setOpenImportDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Import Đề Thi</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên đề thi"
+                value={importFormData.quizName}
+                onChange={(e) => setImportFormData({ ...importFormData, quizName: e.target.value })}
+              />
+              
+              <FormControl fullWidth>
+                <InputLabel id="subject-select-label">Môn học</InputLabel>
+                <Select
+                  labelId="subject-select-label"
+                  label="Môn học"
+                  value={importFormData.subjectId}
+                  onChange={(e) => setImportFormData({ ...importFormData, subjectId: e.target.value })}
+                >
+                  {subjects.map((subject) => (
+                    <MenuItem key={subject.id} value={subject.id}>
+                      {subject.subjectName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <TextField
+                fullWidth
+                type="number"
+                label="Thời gian làm bài (phút)"
+                value={importFormData.duration}
+                onChange={(e) => setImportFormData({ ...importFormData, duration: e.target.value })}
+              />
+
+              <FormControl component="fieldset" sx={{ mb: 2 }}>
+                <FormLabel component="legend">Loại file import</FormLabel>
+                <RadioGroup
+                  row
+                  value={importType}
+                  onChange={(e) => setImportType(e.target.value)}
+                >
+                  <FormControlLabel value="excel" control={<Radio />} label="Excel" />
+                  <FormControlLabel value="word" control={<Radio />} label="Word" />
+                  <FormControlLabel value="pdf" control={<Radio />} label="PDF" />
+                </RadioGroup>
+              </FormControl>
+
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUploadIcon />}
+              >
+                Chọn file {importType.toUpperCase()}
+                <input
+                  type="file"
+                  hidden
+                  accept={
+                    importType === 'excel' ? '.xlsx,.xls' :
+                    importType === 'word' ? '.doc,.docx' :
+                    '.pdf'
+                  }
+                  onChange={(e) => setImportFormData({ ...importFormData, file: e.target.files[0] })}
+                />
+              </Button>
+              {importFormData.file && (
+                <Typography variant="body2" color="textSecondary">
+                  File đã chọn: {importFormData.file.name}
+                </Typography>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenImportDialog(false)}>Hủy</Button>
+            <Button
+              onClick={handleImportExam}
+              variant="contained"
+              color="primary"
+              disabled={!importFormData.file || !importFormData.quizName || !importFormData.subjectId || !importFormData.duration}
+            >
+              Import
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );

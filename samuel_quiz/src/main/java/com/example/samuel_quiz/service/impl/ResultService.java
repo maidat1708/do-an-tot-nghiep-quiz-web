@@ -98,4 +98,16 @@ public class ResultService implements IResultService {
         }
         resultRepo.deleteById(resultId);
     }
+
+    @Override
+    public List<ResultResponse> getResultsByUserId(String userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        
+        List<Result> results = resultRepo.findByUserOrderByTimeEndDesc(user);
+        
+        return results.stream()
+                .map(result -> resultMapper.toResultResponse(resultMapper.toDto(result)))
+                .collect(Collectors.toList());
+    }
 }

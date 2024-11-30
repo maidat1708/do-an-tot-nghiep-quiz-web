@@ -2,14 +2,18 @@ package com.example.samuel_quiz.service.impl;
 
 import com.example.samuel_quiz.config.TemplateProperties;
 import com.example.samuel_quiz.dto.template.TemplateDTO;
+import com.example.samuel_quiz.dto.template.response.TemplateResponse;
 import com.example.samuel_quiz.entities.Subject;
 import com.example.samuel_quiz.entities.Template;
 import com.example.samuel_quiz.exception.AppException;
 import com.example.samuel_quiz.exception.ErrorCode;
+import com.example.samuel_quiz.mapper.TemplateMapper;
 import com.example.samuel_quiz.repository.SubjectRepository;
 import com.example.samuel_quiz.repository.TemplateRepository;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -27,19 +31,14 @@ import java.util.UUID;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 public class TemplateService {
 
     private final TemplateProperties templateProperties;
     private final TemplateRepository templateRepo;
     private final SubjectRepository subjectRepo;
     private final ResourceLoader resourceLoader;
-
-    public TemplateService(TemplateRepository templateRepo, SubjectRepository subjectRepo, ResourceLoader resourceLoader,TemplateProperties templateProperties) {
-        this.templateRepo = templateRepo;
-        this.subjectRepo = subjectRepo;
-        this.resourceLoader = resourceLoader;
-        this.templateProperties = templateProperties;
-    }
+    private final TemplateMapper templateMapper;
 
     public Template saveTemplate(TemplateDTO request) throws IOException {
         // Kiểm tra và tạo thư mục nếu chưa tồn tại
@@ -95,8 +94,8 @@ public class TemplateService {
         }
     }
 
-    public List<Template> getTemplatesBySubject(Long subjectId) {
-        return templateRepo.findBySubjectId(subjectId);
+    public List<TemplateResponse> getTemplatesBySubject(Long subjectId) {
+        return templateRepo.findBySubjectId(subjectId).stream().map(templateMapper::toResponse).toList();
     }
 
     public void deleteTemplate(Long templateId) {
@@ -112,5 +111,12 @@ public class TemplateService {
 
         // Xóa record trong DB
         templateRepo.delete(template);
+    }
+
+    public Template getTemplate(Long templateId) {
+        return templateRepo.findById(templateId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    String.format("Template with id %d not found", templateId)
+                ));
     }
 } 

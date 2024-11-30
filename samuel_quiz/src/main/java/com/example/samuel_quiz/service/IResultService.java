@@ -12,5 +12,6 @@ public interface IResultService {
     ResultResponse createResult(ResultCreateRequest request);
     ResultResponse updateResult(Long resultId, ResultUpdateRequest request);
     void deleteResult(Long resultId);
+    List<ResultResponse> getResultsByUserId(String userId);
 }
 

@@ -263,7 +263,7 @@ const QuestionManagement = () => {
           marginBottom: '10px',
         }}
         >
-          Ngân hàng câu hỏi
+          Môn học
         </Box>
         {subjects.map((subject) => (
           <Box

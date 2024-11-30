@@ -15,11 +15,14 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ResultResponse {
     Long id;
-    Double score;
+    Float score;
     Integer totalCorrect;
-    Integer totalQuestion;
+    Long totalQuestion;
+    LocalDateTime timeStart;
     LocalDateTime submitTime;
+    Long examDuration;
     Long quizId;
     String userId;
-    Set<QuestionResultResponse> questionResults;
+    String quizName;
+    List<QuestionResultResponse> questionResults;
 }

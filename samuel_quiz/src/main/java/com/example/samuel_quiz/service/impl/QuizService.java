@@ -3,8 +3,11 @@ package com.example.samuel_quiz.service.impl;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,6 +17,7 @@ import com.example.samuel_quiz.dto.quiz.QuizDTO;
 import com.example.samuel_quiz.dto.quiz.request.QuizImportRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
 import com.example.samuel_quiz.dto.result.ResultDTO;
+import com.example.samuel_quiz.dto.result.response.QuestionResultResponse;
 import com.example.samuel_quiz.entities.*;
 import com.example.samuel_quiz.exception.AppException;
 import com.example.samuel_quiz.exception.ErrorCode;
@@ -371,12 +375,11 @@ public class QuizService implements IQuizService {
         // Lấy thông tin quiz
         Quiz quiz = quizRepo.findById(request.getQuizId())
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
-                
-        // Lấy user hiện tại
+
         String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepo.findByUsername(currentUserId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-                
+
         LocalDateTime timeEnd = LocalDateTime.now();
         
         // Tạo Result
@@ -388,51 +391,59 @@ public class QuizService implements IQuizService {
                 .examDuration(Duration.between(request.getTimeStart(), timeEnd).getSeconds())
                 .totalQuestion(quiz.getTotalQuestion())
                 .build();
-                
+
         Set<ResultDetail> resultDetails = new HashSet<>();
         long correctAnswers = 0;
-        
-        // Xử lý từng câu trả lời
-        for (QuizSubmissionRequest.QuestionSubmission submission : request.getSubmissions()) {
-            QuestionHistory question = questionHistoryRepo.findById(submission.getQuestionId())
-                    .orElseThrow(() -> new EntityNotFoundException("Question not found"));
-                    
-            // Lấy đáp án đã chọn
-            Set<AnswerHistory> selectedAnswers = new HashSet<>(answerHistoryRepo.findAllById(submission.getSelectedAnswerIds()));
-            
-            // Kiểm tra đáp án đúng - sửa lại phần này
+
+        // Tạo map để lưu submission theo questionId
+        Map<Long, QuizSubmissionRequest.QuestionSubmission> submissionMap = request.getSubmissions()
+                .stream()
+                .collect(Collectors.toMap(
+                    QuizSubmissionRequest.QuestionSubmission::getQuestionId,
+                    submission -> submission
+                ));
+
+        // Xử lý tất cả câu hỏi trong quiz
+        for (QuestionHistory question : quiz.getQuestionHistories()) {
+            QuizSubmissionRequest.QuestionSubmission submission = submissionMap.get(question.getId());
+            Set<AnswerHistory> selectedAnswers = new HashSet<>();
+            int isCorrect = 0;
+
+            // Lấy tất cả đáp án đúng của câu hỏi
             Set<Long> correctAnswerIds = question.getAnswerHistories().stream()
-                    .filter(a -> a.getIsCorrect() == 1)  // Lọc các đáp án có isCorrect = 1
+                    .filter(a -> a.getIsCorrect() == 1)
                     .map(AnswerHistory::getId)
                     .collect(Collectors.toSet());
-                    
-            // Kiểm tra xem người dùng đã chọn đúng tất cả đáp án đúng chưa
-            Set<Long> userAnswerIds = new HashSet<>(submission.getSelectedAnswerIds());
-            int isCorrect = userAnswerIds.equals(correctAnswerIds) ? 1 : 0;
-                    
-            if (isCorrect == 1) {
-                correctAnswers++;
+
+            // Nếu có submission thì xử lý đáp án đã chọn
+            if (submission != null) {
+                selectedAnswers = new HashSet<>(answerHistoryRepo.findAllById(submission.getSelectedAnswerIds()));
+                Set<Long> userAnswerIds = new HashSet<>(submission.getSelectedAnswerIds());
+                isCorrect = userAnswerIds.equals(correctAnswerIds) ? 1 : 0;
+
+                if (isCorrect == 1) {
+                    correctAnswers++;
+                }
             }
-            
-            // Tạo ResultDetail với isCorrect kiểu Integer
+
+            // Tạo ResultDetail
             ResultDetail detail = ResultDetail.builder()
                     .result(result)
                     .questionHistory(question)
                     .selectedAnswers(selectedAnswers)
-                    .isCorrect(isCorrect)  // Đổi thành Integer
+                    .isCorrect(isCorrect)
                     .build();
-                    
             resultDetails.add(detail);
         }
-        
+
         // Cập nhật và lưu Result
         result.setCorrectAnswer(correctAnswers);
         result.setScore((float) correctAnswers / quiz.getTotalQuestion() * 10);
         result.setResultDetails(resultDetails);
-        
         Result savedResult = resultRepo.save(result);
+
+        // Sử dụng mapper để chuyển đổi sang ResultResponse
         ResultDTO resultDTO = resultMapper.toDto(savedResult);
-        
         return resultMapper.toResultResponse(resultDTO);
     }
 

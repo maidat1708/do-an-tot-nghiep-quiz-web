@@ -37,8 +37,11 @@ public interface ResultMapper extends BaseMapper<Result, ResultDTO> {
     @Mapping(target = "quizId", source = "quiz.id")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "submitTime", source = "timeEnd")
+    @Mapping(target = "timeStart", source = "timeStart")
+    @Mapping(target = "examDuration", source = "examDuration")
     @Mapping(target = "totalCorrect", source = "correctAnswer")
     @Mapping(target = "questionResults", source = "resultDetails")
+    @Mapping(target = "quizName", source = "quiz.quizName")
     ResultResponse toResultResponse(ResultDTO resultDTO);
 
     @Mapping(target = "questionText", source = "questionHistory.questionText")
