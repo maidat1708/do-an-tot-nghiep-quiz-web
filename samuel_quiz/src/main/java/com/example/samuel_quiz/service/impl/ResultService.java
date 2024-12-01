@@ -48,8 +48,13 @@ public class ResultService implements IResultService {
 
     @Override
     public List<ResultResponse> getResults() {
-        return resultMapper.toListDto(resultRepo.findAll()).stream()
-                .map(resultMapper::toResultResponse)
+        return resultRepo.findAll().stream()
+                .map(entity ->{
+                    ResultDTO resultDTO = resultMapper.toDto(entity);
+                    ResultResponse response = resultMapper.toResultResponse(resultDTO);
+                    response.setSubjectId(entity.getQuiz().getSubject().getId());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -107,7 +112,12 @@ public class ResultService implements IResultService {
         List<Result> results = resultRepo.findByUserOrderByTimeEndDesc(user);
         
         return results.stream()
-                .map(result -> resultMapper.toResultResponse(resultMapper.toDto(result)))
+                .map(entity ->{
+                    ResultDTO resultDTO = resultMapper.toDto(entity);
+                    ResultResponse response = resultMapper.toResultResponse(resultDTO);
+                    response.setSubjectId(entity.getQuiz().getSubject().getId());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 }

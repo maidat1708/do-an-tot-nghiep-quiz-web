@@ -323,7 +323,7 @@ const QuestionManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredQuestions.map((question, localIndex) => {
+              {paginatedQuestions.map((question, localIndex) => {
                 const globalIndex = (currentPage - 1) * pageSize + localIndex;
                 return (
                   <TableRow key={globalIndex}>
@@ -370,7 +370,7 @@ const QuestionManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredQuestions.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
+        {paginatedQuestions.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination

@@ -744,7 +744,7 @@ const ExamManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredExams.map((exam, localIndex) => {
+              {paginatedExams.map((exam, localIndex) => {
                 const globalIndex = (currentPage - 1) * pageSize + localIndex;
                 return (
                   <TableRow key={globalIndex}>
@@ -790,7 +790,7 @@ const ExamManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredExams.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
+        {paginatedExams.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
         <>
           <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
             <Pagination

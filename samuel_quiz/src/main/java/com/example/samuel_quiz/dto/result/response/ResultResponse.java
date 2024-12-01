@@ -23,6 +23,7 @@ public class ResultResponse {
     Long examDuration;
     Long quizId;
     String userId;
+    Long subjectId;
     String quizName;
     List<QuestionResultResponse> questionResults;
 }

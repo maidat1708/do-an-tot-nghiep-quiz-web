@@ -22,7 +22,7 @@ const ResultsPage = () => {
     }
   }, [subjects]);
 
-  const filteredHistory = selectedSubjectId ? history.filter((q) => q.subject.id === selectedSubjectId) : history;
+  const filteredHistory = selectedSubjectId ? history.filter((q) => q.subjectId === selectedSubjectId) : history;
   
   // Tính toán dữ liệu phân trang
   const paginatedResults = filteredHistory.slice(
@@ -33,7 +33,10 @@ const ResultsPage = () => {
   const totalPages = Math.ceil(filteredHistory.length / pageSize); // Tổng số trang
 
   // Xử lý thay đổi trang
-  const handlePageChange = (event, value) => setCurrentPage(value);
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value)
+    console.log(filteredHistory)
+  };
 
   // Xử lý thay đổi số lượng hiển thị
   const handlePageSizeChange = (event) => {
@@ -64,8 +67,24 @@ const ResultsPage = () => {
 
     if (user?.id) {
       fetchResults();
+      fetchSubjects();
     }
   }, [user]);
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/subjects', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setSubjects(data.result);
+      console.log(data.result)
+    } catch (error) {
+      toast.error('Lỗi khi tải danh sách môn học');
+    }
+  };
 
   const fetchQuizzes = async (results) => {
     try {
@@ -179,7 +198,7 @@ const ResultsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredHistory.map((result, localIndex) => {
+              {paginatedResults.map((result, localIndex) => {
                 const globalIndex = (currentPage - 1) * pageSize + localIndex;
                 return (
                   <TableRow key={globalIndex}>
@@ -209,7 +228,7 @@ const ResultsPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredHistory.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
+        {paginatedResults.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
           <>
             <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
               <Pagination
@@ -225,7 +244,7 @@ const ResultsPage = () => {
                 size="small"
                 sx={{ minWidth: "100px" }}
               >
-                {[10, 20, 30, 40, 50].map((size) => (
+                {[5,10, 20, 30, 40, 50].map((size) => (
                   <MenuItem key={size} value={size}>
                     {size} / trang
                   </MenuItem>

@@ -156,7 +156,7 @@ const ExamPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredQuizzes.map((quiz, localIndex) => {
+              {paginatedQuizzes.map((quiz, localIndex) => {
                 const globalIndex = (currentPage - 1) * pageSize + localIndex;
                 return (
                   <TableRow key={globalIndex}>
@@ -193,7 +193,7 @@ const ExamPage = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        {filteredQuizzes.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
+        {paginatedQuizzes.length > 0 ? ( // Kiểm tra nếu danh sách không rỗng thì hiển thị phân trang
           <>
             <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mt: 2 }}>
               <Pagination
