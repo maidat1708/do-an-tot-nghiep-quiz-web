@@ -12,6 +12,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormLabel from '@mui/material/FormLabel';
+import Menu from '@mui/material/Menu';
 
 const ExamManagement = () => {
   const [exams, setExams] = useState([]);
@@ -60,6 +61,10 @@ const ExamManagement = () => {
     file: null
   });
   const [importType, setImportType] = useState('excel'); // 'excel', 'word', 'pdf'
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedExamId, setSelectedExamId] = useState(null);
+  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   // Lấy danh sách đề thi
   const fetchExams = async () => {
@@ -220,7 +225,7 @@ const ExamManagement = () => {
         const data = await response.json();
         const examDetail = data.result;
         
-        // Cập nhật form data v��i thông tin đề thi và câu hỏi
+        // Cập nhật form data vi thông tin đề thi và câu hỏi
         setEditFormData({
           id: exam.id,
           quizName: examDetail.quizName,
@@ -413,7 +418,7 @@ const ExamManagement = () => {
     }
   };
 
-  // Lấy dữ liệu câu hỏi của đề thi
+  // Lấy dữ liệu câu hỏi ca đề thi
   const handlePreviewClick = (exam) => {
     setSelectedExam(exam.questionHistories); 
     setIsPopupOpen(true); // Mở popup
@@ -429,7 +434,7 @@ const ExamManagement = () => {
     currentPage * pageSize
   );
 
-  const totalPages = Math.ceil(filteredExams.length / pageSize); // Tổng số trang
+  const totalPages = Math.ceil(filteredExams.length / pageSize); // Tng s trang
 
   // Xử lý thay đổi trang
   const handlePageChange = (event, value) => setCurrentPage(value);
@@ -520,6 +525,147 @@ const ExamManagement = () => {
     }
   };
 
+  const handleExportWord = async (examId, templateId) => {
+    try {
+      const response = await fetch(
+        `http://26.184.129.66:8080/api/v1/quizzes/${examId}/export-word?templateId=${templateId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            "Access-Control-Allow-Origin": "*",
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const filename = `quiz_${examId}.docx`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Xuất file Word thành công');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Lỗi khi xuất file Word');
+    }
+  };
+
+  const handleExportPDF = async (examId, templateId) => {
+    try {
+      const response = await fetch(
+        `http://26.184.129.66:8080/api/v1/quizzes/${examId}/export-pdf?templateId=${templateId}`, 
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            "Access-Control-Allow-Origin": "*",
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `quiz_${examId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Xuất file PDF thành công');
+      } else {
+        toast.error('Lỗi khi xuất file PDF');
+      }
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Lỗi khi xuất file PDF');
+    }
+  };
+
+  const handleExportClick = (event, examId) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedExamId(examId);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setSelectedExamId(null);
+  };
+
+  const handleViewSampleTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = importType === 'word' ? 'word' : 'pdf';
+      
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/templates/sample/${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      if (importType === 'word') {
+        setOpenPreviewDialog(true);
+      } else {
+        // Hiển thị PDF trong dialog
+        setPreviewUrl(url);
+        setOpenPreviewDialog(true);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Lỗi khi tải template mẫu');
+    }
+  };
+
+  const handleDownloadWordTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/templates/sample/word`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'template.docx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setOpenPreviewDialog(false);
+      toast.success('Tải template thành công');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Lỗi khi tải template');
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
       {/* Sidebar */}
@@ -593,7 +739,7 @@ const ExamManagement = () => {
                 <TableCell>Môn học</TableCell>
                 <TableCell>Thời gian (phút)</TableCell>
                 <TableCell>Số câu hỏi</TableCell>
-                <TableCell>Xem trước</TableCell>
+                <TableCell align="center">Xem trước</TableCell>
                 <TableCell>Thao tác</TableCell>
               </TableRow>
             </TableHead>
@@ -606,43 +752,37 @@ const ExamManagement = () => {
                     <TableCell>{exam.subject.subjectName}</TableCell>
                     <TableCell>{exam.duration}</TableCell>
                     <TableCell>{exam.totalQuestion}</TableCell>
-                    <TableCell >
+                    <TableCell align="center">
                       <IconButton onClick={() => handlePreviewClick(exam)}>
-                        <VisibilityIcon color="primary" />
+                        <VisibilityIcon sx={{ color: '#1976d2' }} />
                       </IconButton>
                     </TableCell>
                     <TableCell>
-                      <button
-                        onClick={() => handleEditExam(exam)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#4CAF50", // Màu xanh
-                          marginRight: "10px",
-                        }}
-                      >
-                        <FaEdit size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteExam(exam.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "#f44336", // Màu đỏ
-                        }}
-                      >
-                        <FaTrash size={18} />
-                      </button>
-                      <Tooltip title="Xuất đề thi">
-                        <IconButton
-                          color="primary"
-                          onClick={() => handleExportExam(exam.id)}
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: '16px',  // Tăng khoảng cách giữa các nút
+                        padding: '0 8px' // Thêm padding để tránh sát mép
+                      }}>
+                        <IconButton 
+                          onClick={() => handleEditExam(exam)}
+                          style={{ padding: '8px' }} // Thêm padding cho button
                         >
-                          <FileDownloadIcon />
+                          <FaEdit size={18} style={{ color: '#4CAF50' }} />
                         </IconButton>
-                      </Tooltip>
+                        
+                        <IconButton 
+                          onClick={() => handleDeleteExam(exam.id)}
+                          style={{ padding: '8px' }}
+                        >
+                          <FaTrash size={18} style={{ color: '#f44336' }} />
+                        </IconButton>
+
+                        <IconButton onClick={(e) => handleExportClick(e, exam.id)}>
+                          <FileDownloadIcon sx={{ color: '#2196F3' }} />
+                        </IconButton>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -897,18 +1037,18 @@ const ExamManagement = () => {
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               <TextField
-                label="Nội dung câu hỏi"
+                label="Ni dung cau hoi"
                 fullWidth
                 value={questionFormData.questionText}
                 onChange={(e) => setQuestionFormData({...questionFormData, questionText: e.target.value})}
               />
               
               <FormControl fullWidth>
-                <InputLabel>Cấp độ</InputLabel>
+                <InputLabel>Cap do</InputLabel>
                 <Select
                   value={questionFormData.level}
                   onChange={(e) => setQuestionFormData({...questionFormData, level: e.target.value})}
-                  label="Cấp độ"
+                  label="Cap do"
                 >
                   <MenuItem value={1}>Dễ</MenuItem>
                   <MenuItem value={2}>Trung bình</MenuItem>
@@ -919,7 +1059,7 @@ const ExamManagement = () => {
               {questionFormData.answers.map((answer, index) => (
                 <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <TextField
-                    label={`Đáp án ${String.fromCharCode(65 + index)}`}
+                    label={`Dap an ${String.fromCharCode(65 + index)}`}
                     fullWidth
                     value={answer.answerText}
                     onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
@@ -931,7 +1071,7 @@ const ExamManagement = () => {
                         onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.checked)}
                       />
                     }
-                    label="Đáp án đúng"
+                    label="Dap an dung"
                   />
                 </Box>
               ))}
@@ -995,6 +1135,17 @@ const ExamManagement = () => {
                 </RadioGroup>
               </FormControl>
 
+              {(importType === 'word' || importType === 'pdf') && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleViewSampleTemplate}
+                  startIcon={<VisibilityIcon />}
+                >
+                  Xem Template Mẫu
+                </Button>
+              )}
+
               <Button
                 variant="outlined"
                 component="label"
@@ -1028,6 +1179,81 @@ const ExamManagement = () => {
               disabled={!importFormData.file || !importFormData.quizName || !importFormData.subjectId || !importFormData.duration}
             >
               Import
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+        >
+          <MenuItem onClick={() => {
+            handleExportWord(selectedExamId, 5); // templateId
+            handleClose();
+          }}>
+            Xuất file Word
+          </MenuItem>
+          <MenuItem onClick={() => {
+            handleExportPDF(selectedExamId, 4); // templateId
+            handleClose();
+          }}>
+            Xuất file PDF
+          </MenuItem>
+        </Menu>
+
+        <Dialog
+          open={openPreviewDialog}
+          onClose={() => {
+            setOpenPreviewDialog(false);
+            if (previewUrl) {
+              window.URL.revokeObjectURL(previewUrl);
+              setPreviewUrl('');
+            }
+          }}
+          maxWidth="lg"
+          fullWidth
+        >
+          <DialogTitle>
+            Xem Template {importType.toUpperCase()}
+          </DialogTitle>
+          <DialogContent>
+            {importType === 'word' ? (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography variant="h6" gutterBottom>
+                  Không thể xem trước file Word trực tiếp
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Vui lòng tải xuống để xem nội dung file Word
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<FileDownloadIcon />}
+                  onClick={handleDownloadWordTemplate}
+                >
+                  Tải Template Word
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ height: '70vh', width: '100%' }}>
+                <embed
+                  src={previewUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="100%"
+                />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => {
+              setOpenPreviewDialog(false);
+              if (previewUrl) {
+                window.URL.revokeObjectURL(previewUrl);
+                setPreviewUrl('');
+              }
+            }}>
+              Đóng
             </Button>
           </DialogActions>
         </Dialog>

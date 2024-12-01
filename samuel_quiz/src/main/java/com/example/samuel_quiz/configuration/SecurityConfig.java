@@ -31,7 +31,7 @@ public class SecurityConfig{
 
     @Value("${jwt.signerKey}")
     private String SIGNER_KEY;
- 
+
     @Autowired
     private CustomJWTDecoder customJWTDecoder;
 
@@ -54,6 +54,7 @@ public class SecurityConfig{
         corsConfiguration.addAllowedOrigin("*");  // Cho phép tất cả các nguồn gốc
         corsConfiguration.addAllowedMethod("*");  // Cho phép tất cả các phương thức (GET, POST, PUT, DELETE...)
         corsConfiguration.addAllowedHeader("*");  // Cho phép tất cả các tiêu đề
+        corsConfiguration.addExposedHeader("Content-Disposition"); // Thêm dòng này để cho phép download file
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);  // Áp dụng cho tất cả các đường dẫn

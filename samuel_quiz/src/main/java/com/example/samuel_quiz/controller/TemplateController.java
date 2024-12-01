@@ -99,7 +99,7 @@ public class TemplateController {
         
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
-                .header("Content-Disposition", "attachment; filename=quiz_template.pdf")
+                .header("Content-Disposition", "attachment; filename=quiz_template.pdf; inline")
                 .contentLength(data.length)
                 .body(resource);
     }

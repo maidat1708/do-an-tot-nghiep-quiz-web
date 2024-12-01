@@ -46,7 +46,7 @@ public class DocumentService {
                     for (XWPFRun run : runs) {
                         String text = run.getText(0);
                         if (text != null) {
-                            text = text.replace("{{SUBJECT_NAME}}", quizName)
+                            text = text.replace("{{QUIZ_NAME}}", quizName)
                                      .replace("{{DURATION}}", String.valueOf(duration))
                                      .replace("{{TOTAL_QUESTIONS}}", String.valueOf(questions.size()));
                             run.setText(text, 0);
@@ -139,8 +139,8 @@ public class DocumentService {
             // Xử lý từng dòng
             for (String line : lines) {
                 // Thay thế các placeholder
-                if (line.contains("{{SUBJECT_NAME}}")) {
-                    line = line.replace("{{SUBJECT_NAME}}", quizName);
+                if (line.contains("{{QUIZ_NAME}}")) {
+                    line = line.replace("{{QUIZ_NAME}}", quizName);
                 }
                 if (line.contains("{{DURATION}}")) {
                     line = line.replace("{{DURATION}}", String.valueOf(duration));
