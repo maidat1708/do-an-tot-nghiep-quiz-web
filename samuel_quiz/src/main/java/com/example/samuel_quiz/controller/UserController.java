@@ -22,11 +22,13 @@ import com.example.samuel_quiz.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("users")
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Tag(name = "USER", description = "Người dùng")
+@Tag(name = "USER", description = "Quản lý người dùng")
 public class UserController {
     @Autowired
     IUserService userService;
@@ -72,6 +74,24 @@ public class UserController {
         userService.deleteUser(userId);
         return APIResponse.<String>builder()
                 .result("User has been deleted!")
+                .build();
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Lấy danh sách giáo viên")
+    public APIResponse<List<UserResponse>> getTeachers() {
+        return APIResponse.<List<UserResponse>>builder()
+                .result(userService.getUsersByRole("TEACHER"))
+                .build();
+    }
+
+    @GetMapping("/students") 
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Lấy danh sách học sinh")
+    public APIResponse<List<UserResponse>> getStudents() {
+        return APIResponse.<List<UserResponse>>builder()
+                .result(userService.getUsersByRole("STUDENT"))
                 .build();
     }
 }

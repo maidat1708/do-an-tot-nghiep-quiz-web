@@ -12,6 +12,7 @@ import java.util.List;
 public class QuizSubmissionRequest {
     Long quizId;
     LocalDateTime timeStart;
+    Long examSessionId;
     List<QuestionSubmission> submissions;
     
     @Data

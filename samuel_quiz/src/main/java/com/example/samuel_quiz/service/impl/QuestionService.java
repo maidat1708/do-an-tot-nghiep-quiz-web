@@ -120,4 +120,15 @@ public class QuestionService implements IQuestionService {
         }
         questionRepo.deleteById(questionId);
     }
+
+    @Override
+    public List<QuestionResponse> getQuestionsBySubject(Long subjectId) {
+        List<Question> questions = questionRepo.findBySubjectId(subjectId);
+        return questions.stream()
+                .map(entity -> {
+                    QuestionDTO questionDTO = questionMapper.toDto(entity);
+                    return questionMapper.toQuestionResponse(questionDTO);
+                })
+                .collect(Collectors.toList());
+    }
 }

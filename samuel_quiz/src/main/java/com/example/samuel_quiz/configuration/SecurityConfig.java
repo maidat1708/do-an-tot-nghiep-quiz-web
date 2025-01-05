@@ -69,13 +69,12 @@ public class SecurityConfig{
         httpSecurity
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/users", "auth/verify", "auth/login", "auth/logout","auth/refresh", "auth/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/products").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users", "auth/verify", "auth/login",
+                                "auth/logout","auth/refresh", "auth/register").permitAll()
                         // if use hasRole -> have to custom authority prefix ->
                         // use jwtAuthenticationConverter -> change "SCOPE_ADMIN" -> "ROLE_ADMIN"
-                        .requestMatchers(HttpMethod.GET, "/products/{productId}").hasAnyRole(Role.STUDENT.name(),Role.ADMIN.name(),Role.TEACHER.name())
-                        .requestMatchers("/products/**", "/users").hasRole(Role.ADMIN.name())
-                        .requestMatchers("/comments/**").hasAnyRole(Role.STUDENT.name(),Role.ADMIN.name(),Role.TEACHER.name())
+                        .requestMatchers("/exam-sessions/student/**").hasRole(Role.STUDENT.name())
+                        .requestMatchers("/exam-sessions/**").hasAnyRole(Role.ADMIN.name(), Role.TEACHER.name())
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable);
         // return exception if role is incorrect
@@ -83,7 +82,7 @@ public class SecurityConfig{
 
         // must have token to accept request. ex patterns get user by id
         httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(customJWTDecoder)
-                // convert SOPCE -> ROLE -> use hasRole
+                // convert SCOPE -> ROLE -> use hasRole
                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 // if check token fail -> exception -> unauthoticated
                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
@@ -95,6 +94,7 @@ public class SecurityConfig{
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);

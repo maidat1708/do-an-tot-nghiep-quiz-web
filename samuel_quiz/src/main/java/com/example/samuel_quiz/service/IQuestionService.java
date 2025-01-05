@@ -21,4 +21,7 @@ public interface IQuestionService {
 
     // Xóa một câu hỏi theo ID
     void deleteQuestion(Long questionId);
+
+    // Lấy danh sách câu hỏi theo môn học
+    List<QuestionResponse> getQuestionsBySubject(Long subjectId);
 }

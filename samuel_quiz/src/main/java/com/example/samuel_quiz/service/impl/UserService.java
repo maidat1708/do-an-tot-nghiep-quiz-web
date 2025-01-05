@@ -1,6 +1,7 @@
 package com.example.samuel_quiz.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.example.samuel_quiz.dto.profile.ProfileDTO;
 import com.example.samuel_quiz.dto.user.UserDTO;
@@ -109,17 +110,12 @@ public class UserService implements IUserService {
     public void deleteUser(String id) {
         userRepo.deleteById(id);
     }
-    // public static Set<String> stringToSet(String str) {
-    // if (str != null && !str.isEmpty()) {
-    // return new HashSet<>(Arrays.asList(str.split(",")));
-    // }
-    // return new HashSet<>();
-    // }
 
-    // public static String setToString(Set<String> set) {
-    // if (set != null && !set.isEmpty()) {
-    // return String.join(",", set);
-    // }
-    // return "";
-    // }
+    @Override
+    public List<UserResponse> getUsersByRole(String role) {
+        List<User> users = userRepo.findByRole(role);
+        return users.stream()
+                .map(user -> userMapper.toUserResponse(userMapper.toDto(user)))
+                .collect(Collectors.toList());
+    }
 }

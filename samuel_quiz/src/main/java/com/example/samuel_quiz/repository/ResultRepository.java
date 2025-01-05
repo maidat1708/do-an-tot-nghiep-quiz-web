@@ -13,4 +13,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findByUserId(String userId);
     List<Result> findByQuizId(Long quizId);
     List<Result> findByUserOrderByTimeEndDesc(User user);
+    boolean existsByUserIdAndExamSessionId(String userId, Long examSessionId);
+    List<Result> findByExamSessionId(Long examSessionId);
 }

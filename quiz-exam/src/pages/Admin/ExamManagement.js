@@ -1037,14 +1037,14 @@ const ExamManagement = () => {
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               <TextField
-                label="Ni dung cau hoi"
+                label="Nội dung câu hỏi"
                 fullWidth
                 value={questionFormData.questionText}
                 onChange={(e) => setQuestionFormData({...questionFormData, questionText: e.target.value})}
               />
               
               <FormControl fullWidth>
-                <InputLabel>Cap do</InputLabel>
+                <InputLabel>Cấp độ</InputLabel>
                 <Select
                   value={questionFormData.level}
                   onChange={(e) => setQuestionFormData({...questionFormData, level: e.target.value})}
@@ -1059,7 +1059,7 @@ const ExamManagement = () => {
               {questionFormData.answers.map((answer, index) => (
                 <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <TextField
-                    label={`Dap an ${String.fromCharCode(65 + index)}`}
+                    label={`Đáp án ${String.fromCharCode(65 + index)}`}
                     fullWidth
                     value={answer.answerText}
                     onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
@@ -1071,7 +1071,7 @@ const ExamManagement = () => {
                         onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.checked)}
                       />
                     }
-                    label="Dap an dung"
+                    label="Đáp án đúng"
                   />
                 </Box>
               ))}

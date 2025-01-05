@@ -85,6 +85,9 @@ public class QuizService implements IQuizService {
     ResultRepository resultRepo;
 
     @Autowired
+    ExamSessionRepository examSessionRepository;
+
+    @Autowired
     ResultMapper resultMapper;
 
     @Autowired
@@ -139,9 +142,8 @@ public class QuizService implements IQuizService {
                 .collect(Collectors.toSet());
         // Tạo Quiz từ request và set subject
         QuizDTO quiz = quizMapper.toQuiz(request);
-        quiz.setSubject(subjectMapper.toDto(subject));
-
         Quiz savedQuiz = quizMapper.toEntity(quiz);
+        savedQuiz.setSubject(subject);
         savedQuiz.setQuestionHistories(questionHistories);
         savedQuiz.setStatus(1);
         // Lưu Quiz
@@ -440,6 +442,9 @@ public class QuizService implements IQuizService {
         result.setCorrectAnswer(correctAnswers);
         result.setScore((float) correctAnswers / quiz.getTotalQuestion() * 10);
         result.setResultDetails(resultDetails);
+        if(request.getExamSessionId() != null) {
+            result.setExamSession(examSessionRepository.findById(request.getExamSessionId()).orElse(null));
+        }
         Result savedResult = resultRepo.save(result);
 
         // Sử dụng mapper để chuyển đổi sang ResultResponse

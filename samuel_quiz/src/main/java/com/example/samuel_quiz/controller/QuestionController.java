@@ -58,4 +58,11 @@ public class QuestionController {
         questionService.deleteQuestion(id);
         return APIResponse.<Void>builder().build();
     }
+
+    @GetMapping("/subject/{subjectId}")
+    public APIResponse<List<QuestionResponse>> getQuestionsBySubject(@PathVariable Long subjectId) {
+        return APIResponse.<List<QuestionResponse>>builder()
+                .result(questionService.getQuestionsBySubject(subjectId))
+                .build();
+    }
 }

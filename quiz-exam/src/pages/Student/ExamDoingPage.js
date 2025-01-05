@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button, Typography, Box, Paper, Grid, Container, List, ListItem, ListItemText, Radio, RadioGroup, FormControlLabel, FormControl, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import ResultsModal from '../../components/ResultsModal';
 import { toast } from 'react-toastify';
 
 const ExamDoingPage = () => {
-  const navigate = useNavigate();
   const { quizId } = useParams();
-  
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [timeLeft, setTimeLeft] = useState(location.state?.durationInSeconds || 1);
   const timer = useRef(null);
   const questionRefs = useRef([]);
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [selectedQuestion, setSelectedQuestion] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [examResult, setExamResult] = useState(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
@@ -31,8 +31,8 @@ const ExamDoingPage = () => {
       if (data.code === 200) {
         setQuiz(data.result);
         setQuestions(data.result.questionHistories);
+        setTimeLeft(location.state?.durationInSeconds || data.result.duration * 60);
         setSelectedQuestion(data.result.questionHistories[0]);
-        setTimeLeft(data.result.duration * 60);
         setTimeStart(new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString());
       }
     } catch (error) {
@@ -44,27 +44,46 @@ const ExamDoingPage = () => {
     fetchQuizData();
   }, [quizId]);
 
+  const formatTime = (timeInSeconds) => {
+    if (timeInSeconds <= 0) return "00:00:00";
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = timeInSeconds % 60;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     if (quiz && !showResultsModal && timeLeft > 0) {
       timer.current = setInterval(() => {
-        setTimeLeft((prevTime) => {
+
+        setTimeLeft(prevTime => {
+          // Nếu đã hết thời gian hoặc đến giờ kết thúc ca thi
           if (prevTime <= 1) {
             clearInterval(timer.current);
-            toast.warning('Hết thời gian làm bài');
-            handleSubmit(); // Nộp bài khi hết giờ
-            return 0; // Đảm bảo không giảm xuống âm
+            toast.warning('Hết thời gian làm bài!');
+            return 0;
           }
+
           return prevTime - 1;
         });
       }, 1000);
     }
 
+    // Cleanup interval khi unmount hoặc khi dependencies thay đổi
     return () => {
       if (timer.current) {
         clearInterval(timer.current);
       }
     };
-  }, [timeLeft, showResultsModal]);
+  }, [quiz, showResultsModal, location.state, navigate]);
+
+  // Thêm useEffect để kiểm tra và tự động nộp bài khi hết giờ
+  useEffect(() => {
+    if (timeLeft === 0 && !showResultsModal) {
+      handleSubmit();
+    }
+  }, [timeLeft]);
 
   const handleSelectQuestion = (questionId) => {
     const question = questions.find((q) => q.id === questionId);
@@ -87,10 +106,10 @@ const ExamDoingPage = () => {
   };
 
   
-  const handlePauseExam = () => {
-    console.log('Bài thi đã tạm dừng');
-    navigate('/exam');
-  };
+  // const handlePauseExam = () => {
+  //   console.log('Bài thi đã tạm dừng');
+  //   navigate('/exam');
+  // };
 
   const handleSubmit = async () => {
     try {
@@ -102,6 +121,7 @@ const ExamDoingPage = () => {
       const submitData = {
         quizId: parseInt(quizId),
         timeStart: timeStart,
+        examSessionId: location.state?.examSessionId,
         submissions: Object.entries(answers).map(([questionId, answer]) => ({
           questionId: parseInt(questionId),
           selectedAnswerIds: [parseInt(answer.answerId)]
@@ -154,11 +174,6 @@ const ExamDoingPage = () => {
   const handleCloseResultsModal = () => {
     setShowResultsModal(false); // Đóng modal kết quả và chuyển hướng về trang kết quả
     navigate('/exam');
-  };
-  const formatTime = (timeInSeconds) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = timeInSeconds % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
   const calculateScore = () => {
     return (calculateCorrectAnswers() / questions.length) * 10;
@@ -241,9 +256,9 @@ const ExamDoingPage = () => {
               </Paper>
               {/* Nút Tạm dừng và Nộp bài */}
             <Box sx={{ textAlign: 'center', marginTop: 2 }}>
-              <Button variant="contained" color="error" onClick={handlePauseExam}sx={{ marginRight: 2 }}>
+              {/* <Button variant="contained" color="error" onClick={handlePauseExam}sx={{ marginRight: 2 }}>
                 Tạm dừng
-              </Button>
+              </Button> */}
               <Button
               variant="contained"
               color="success"

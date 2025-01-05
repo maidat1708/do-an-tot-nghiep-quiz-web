@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     // Có thể thêm các phương thức query bổ sung nếu cần
+    List<Question> findBySubjectId(Long subjectId);
 }

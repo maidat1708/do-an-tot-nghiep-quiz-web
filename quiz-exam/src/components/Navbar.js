@@ -72,8 +72,9 @@ const Navbar = () => {
     setAnchorEl(null); // Chỉ để đóng menu khi trạng thái đăng nhập thay đổi
   }, [isLoggedIn]);    
 
-  // Kiểm tra role ADMIN
+  // Kiểm tra role ADMIN và TEACHER
   const isAdmin = user && user.role === 'ADMIN';
+  const isTeacher = user && user.role === 'TEACHER';
 
   return (
     <>
@@ -93,6 +94,13 @@ const Navbar = () => {
                   <Button color="inherit" component={Link} to="/manage-exams" sx={{ mx: 2 }}>Đề thi</Button>
                   <Button color="inherit" component={Link} to="/manage-results" sx={{ mx: 2 }}>Điểm thi</Button>
                   <Button color="inherit" component={Link} to="/manage-templates" sx={{ mx: 2 }}>Template</Button>
+                </>
+              ) : isTeacher ? (
+                <>
+                  <Button color="inherit" component={Link} to="/" sx={{ mx: 4 }}>Trang chủ</Button>
+                  <Button color="inherit" component={Link} to="/manage-questions/teacher" sx={{ mx: 2 }}>Câu hỏi</Button>
+                  <Button color="inherit" component={Link} to="/manage-exams/teacher" sx={{ mx: 2 }}>Đề thi</Button>
+                  <Button color="inherit" component={Link} to="/exam-sessions" sx={{ mx: 4 }}>Ca thi</Button>
                 </>
               ) : (
                 <>

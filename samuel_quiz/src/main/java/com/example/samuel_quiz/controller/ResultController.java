@@ -2,9 +2,11 @@ package com.example.samuel_quiz.controller;
 
 import java.util.List;
 
+import com.example.samuel_quiz.dto.result.response.ResultExamSessionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.samuel_quiz.dto.auth.response.APIResponse;
@@ -65,6 +67,15 @@ public class ResultController {
         return APIResponse.<List<ResultResponse>>builder()
                 .result(resultService.getResultsByUserId(userId))
                 .build();
+    }
+
+    @GetMapping("/exam-session/{examSessionId}")
+    public ResponseEntity<APIResponse<List<ResultExamSessionResponse>>> getResultsByExamSession(
+            @PathVariable Long examSessionId) {
+        List<ResultExamSessionResponse> results = resultService.getResultsByExamSession(examSessionId);
+        return ResponseEntity.ok(APIResponse.<List<ResultExamSessionResponse>>builder()
+                .result(results)
+                .build());
     }
 
 }

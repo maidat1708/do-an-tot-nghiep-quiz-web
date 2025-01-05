@@ -4,7 +4,6 @@ import java.util.List;
 import java.io.IOException;
 
 import com.example.samuel_quiz.dto.result.response.ResultResponse;
-import com.example.samuel_quiz.service.impl.WordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;

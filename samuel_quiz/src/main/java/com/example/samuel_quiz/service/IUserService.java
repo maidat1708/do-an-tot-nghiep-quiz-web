@@ -14,4 +14,5 @@ public interface IUserService {
     UserResponse updateUser(String userId, UserUpdateRequest request);
     UserResponse getMyInfor();
     void deleteUser(String id);
+    List<UserResponse> getUsersByRole(String role);
 }

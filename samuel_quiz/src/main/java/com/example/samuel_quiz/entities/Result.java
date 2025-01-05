@@ -42,4 +42,7 @@ public class Result {
     @EqualsAndHashCode.Exclude  // Thêm annotation này
     Set<ResultDetail> resultDetails;
 
+    @ManyToOne
+    @JoinColumn(name = "exam_session_id")
+    private ExamSession examSession;
 }

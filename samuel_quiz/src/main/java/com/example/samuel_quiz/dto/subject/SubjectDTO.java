@@ -20,4 +20,15 @@ public class SubjectDTO {
     Set<QuizDTO> quizzes;
     @JsonIgnore
     Set<QuestionDTO> questions;
+
+    @Override
+    public String toString() {
+        return "SubjectDTO{" +
+                "id=" + id +
+                ", subjectName='" + subjectName + '\'' +
+                ", description='" + description + '\'' +
+                ", quizzes=" + quizzes +
+                ", questions=" + questions +
+                '}';
+    }
 }
