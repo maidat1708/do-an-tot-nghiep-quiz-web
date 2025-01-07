@@ -104,7 +104,7 @@ public class QuizController {
     public ResponseEntity<ByteArrayResource> exportQuizToWord(@PathVariable Long quizId, @RequestParam Long templateId) throws IOException {
         byte[] data = quizService.createWordQuiz(quizId, templateId);
         ByteArrayResource resource = new ByteArrayResource(data);
-        
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                 .header("Content-Disposition", "attachment; filename=quiz_" + quizId + ".docx")
@@ -116,7 +116,7 @@ public class QuizController {
     public ResponseEntity<ByteArrayResource> exportQuizToPDF(@PathVariable Long quizId, @RequestParam Long templateId) throws IOException {
         byte[] data = quizService.createPDFQuiz(quizId, templateId);
         ByteArrayResource resource = new ByteArrayResource(data);
-        
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header("Content-Disposition", "attachment; filename=quiz_" + quizId + ".pdf")

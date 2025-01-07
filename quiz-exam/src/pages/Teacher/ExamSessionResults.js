@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Box, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, Typography, Button, Chip, IconButton
+  TableHead, TableRow, Paper, Typography, Button, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip
 } from "@mui/material";
 import ResultsModal from "../../components/ResultsModal";
 import { toast } from 'react-toastify';
-import { Visibility } from '@mui/icons-material';
+import { Visibility, Assessment as AssessmentIcon } from '@mui/icons-material';
+import ExamSessionStats from '../../components/ExamSessionStats';
 
 const ExamSessionResults = () => {
   const { examSessionId } = useParams();
@@ -15,6 +16,8 @@ const ExamSessionResults = () => {
   const [selectedResult, setSelectedResult] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [allStudents, setAllStudents] = useState([]);
+  const [openStats, setOpenStats] = useState(false);
+  const [stats, setStats] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -89,13 +92,48 @@ const ExamSessionResults = () => {
     });
   };
 
+  const fetchStats = async () => {
+    try {
+      const response = await fetch(
+        `http://26.184.129.66:8080/api/v1/exam-sessions/${examSessionId}/stats`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.code === 200) {
+        setStats(data.result);
+        setOpenStats(true);
+      } else {
+        toast.error('Lỗi khi tải thống kê');
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối server');
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {examSession && (
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Kết quả ca thi: {examSession.name}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h4" gutterBottom>
+              Kết quả ca thi: {examSession.name}
+            </Typography>
+            <Tooltip title="Xem thống kê">
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AssessmentIcon />}
+                onClick={fetchStats}
+                sx={{ mb: 2 }}
+              >
+                Thống kê
+              </Button>
+            </Tooltip>
+          </Box>
           <Typography variant="subtitle1">
             Bài thi: {examSession.quiz.quizName}
           </Typography>
@@ -176,6 +214,25 @@ const ExamSessionResults = () => {
           Đóng
         </Button>
       </Box>
+
+      <Dialog
+        open={openStats}
+        onClose={() => setOpenStats(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Thống kê chi tiết kết quả thi
+        </DialogTitle>
+        <DialogContent>
+          {stats && <ExamSessionStats stats={stats} />}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenStats(false)}>
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {showPopup && selectedResult && (
         <ResultsModal

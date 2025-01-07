@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,
   DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Box,List,ListItem,
-  ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination,Tooltip} from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+  ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination,Tooltip,Chip, InputAdornment, OutlinedInput} from '@mui/material';
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Close as CloseIcon, DeleteSweep as DeleteSweepIcon, Check as CheckIcon, DriveFileRenameOutline as DriveFileRenameOutlineIcon, Timer as TimerIcon, Subject as SubjectIcon, Quiz as QuizIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ExamPopup from "../../components/ExamPopup";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -13,6 +14,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormLabel from '@mui/material/FormLabel';
 import Menu from '@mui/material/Menu';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import SaveIcon from '@mui/icons-material/Save';
+import SearchIcon from '@mui/icons-material/Search';
 
 const ExamManagement = () => {
   const [exams, setExams] = useState([]);
@@ -65,6 +69,19 @@ const ExamManagement = () => {
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [showSelectedAnswers, setShowSelectedAnswers] = useState({});
+  const [questionSearchQuery, setQuestionSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Lấy danh sách đề thi
   const fetchExams = async () => {
@@ -128,6 +145,19 @@ const ExamManagement = () => {
     }
   }, [subjects]);
 
+  // Thêm useEffect để set formData.subjectId khi component mount
+  useEffect(() => {
+    if (subjects.length > 0) {
+      // Set môn học đầu tiên làm mặc định
+      const firstSubject = subjects[0];
+      setSelectedSubjectId(firstSubject.id);
+      setFormData(prev => ({
+        ...prev,
+        subjectId: firstSubject.id
+      }));
+    }
+  }, [subjects]); // Chạy khi subjects thay đổi
+
   const filteredExams = selectedSubjectId ? exams.filter((q) => q.subject.id === selectedSubjectId) : exams;
   
   // Gọi API khi component mount
@@ -135,27 +165,69 @@ const ExamManagement = () => {
     fetchExams();
     fetchSubjects();
     fetchQuestions();
+    handleSubjectSelect(selectedSubjectId);
   }, []); // Empty dependency array means this runs once when component mounts
 
   // Xử lý chọn câu hỏi
-  const handleQuestionSelect = (question) => {
-    const isSelected = selectedQuestions.find(q => q.id === question.id);
-    if (isSelected) {
-      setSelectedQuestions(selectedQuestions.filter(q => q.id !== question.id));
-    } else {
-      setSelectedQuestions([...selectedQuestions, question]);
-    }
+  const handleQuestionSelect = useCallback((question) => {
+    setSelectedQuestions(prev => {
+      const existingIndex = prev.findIndex(q => q.questionText === question.questionText);
+      
+      if (existingIndex >= 0) {
+        // Xóa câu hỏi
+        setShowSelectedAnswers(prev => {
+          const newState = { ...prev };
+          delete newState[question.id];
+          return newState;
+        });
+        return prev.filter((_, index) => index !== existingIndex);
+      }
+      
+      // Thêm câu hỏi mới
+      setShowSelectedAnswers(prev => ({
+        ...prev,
+        [question.id]: false
+      }));
+
+      // Cập nhật số lượng câu hỏi trong formData
+      setFormData(prev => ({
+        ...prev,
+        totalQuestion: prev.length + 1
+      }));
+
+      return [...prev, question];
+    });
+  }, []);
+
+  // Thêm hàm kiểm tra câu hỏi trùng lặp
+  const isQuestionDuplicate = useCallback((question1, question2) => {
+    return question1.questionText === question2.questionText;
+  }, []);
+
+  // Sửa lại hàm xử lý khi thay đổi giá trị form
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    console.log('Form data after change:', formData); // Để debug
   };
 
   // Tạo đề thi mới
   const handleCreateExam = async () => {
     try {
+      // Kiểm tra dữ liệu trước khi gửi
+      if (!formData.quizName || !formData.duration || !formData.subjectId) {
+        toast.error('Vui lòng điền đầy đủ thông tin');
+        return;
+      }
+
       const examData = {
-        quizName: formData.quizName,
+        quizName: formData.quizName.trim(),
         totalQuestion: selectedQuestions.length,
         duration: parseInt(formData.duration),
         subjectId: formData.subjectId,
-        questionIds: selectedQuestions.map(q => q.id) // Thêm danh sách ID câu hỏi
+        questionIds: selectedQuestions.map(q => q.id)
       };
 
       const response = await fetch('http://26.184.129.66:8080/api/v1/quizzes', {
@@ -170,12 +242,22 @@ const ExamManagement = () => {
       if (response.ok) {
         toast.success('Tạo đề thi thành công');
         setOpenDialog(false);
+        // Reset form sau khi tạo thành công
+        setFormData({
+          quizName: '',
+          totalQuestion: '',
+          duration: '',
+          subjectId: subjects.length > 0 ? subjects[0].id : ''
+        });
         setSelectedQuestions([]);
         fetchExams();
       } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
         toast.error('Lỗi khi tạo đề thi');
       }
     } catch (error) {
+      console.error('Error creating exam:', error);
       toast.error('Lỗi khi tạo đề thi');
     }
   };
@@ -286,53 +368,276 @@ const ExamManagement = () => {
   };
 
   // Thêm dialog chọn câu hỏi
-  const QuestionSelectionDialog = () => (
-    <Dialog open={openQuestionDialog} onClose={() => setOpenQuestionDialog(false)} maxWidth="md" fullWidth>
-      <DialogTitle>
-        Chọn câu hỏi 
-        <Typography variant="subtitle1" color="textSecondary">
-          Đã chọn: {selectedQuestions.length} câu
-        </Typography>
-      </DialogTitle>
-      <DialogContent>
-        <List>
-          {questions.map((question) => (
-            <ListItem key={question.id} disablePadding>
-              <ListItemButton onClick={() => handleQuestionSelect(question)}>
-                <ListItemIcon>
-                  <Checkbox
-                    edge="start"
-                    checked={selectedQuestions.some(q => q.id === question.id)}
-                    tabIndex={-1}
-                    disableRipple
-                  />
-                </ListItemIcon>
-                <ListItemText 
-                  primary={question.questionText}
-                  secondary={
-                    <React.Fragment>
-                      <Typography component="span" variant="body2" color="textPrimary">
-                        Độ khó: {question.level}
-                      </Typography>
-                      <br />
-                      {question.answers?.map((answer, index) => (
-                        <Typography key={index} component="span" variant="body2" color={answer.isCorrect ? "success.main" : "text.primary"}>
-                          {index + 1}. {answer.answerText}{' '}
-                        </Typography>
-                      ))}
-                    </React.Fragment>
+  const QuestionSelectionDialog = () => {
+    // Thay đổi thành một object để theo dõi trạng thái hiển thị của từng câu hỏi
+    const [showAnswers, setShowAnswers] = useState({});
+
+    // Hàm toggle cho từng câu hỏi
+    const toggleAnswers = (questionId, event) => {
+      event.stopPropagation(); // Ngăn không cho sự kiện click lan ra ListItemButton
+      setShowAnswers(prev => ({
+        ...prev,
+        [questionId]: !prev[questionId]
+      }));
+    };
+
+    // Thêm hàm xử lý xóa tất cả
+    const handleClearAll = () => {
+      // Hiển thị dialog xác nhận trước khi xóa
+      if (window.confirm('Bạn có chắc chắn muốn xóa tất cả câu hỏi đã chọn?')) {
+        setSelectedQuestions([]);
+        toast.success('Đã xóa tất cả câu hỏi đã chọn');
+      }
+    };
+
+    return (
+      <Dialog 
+        open={openQuestionDialog}
+        onClose={() => {
+          setOpenQuestionDialog(false);
+          setSearchQuery('');
+        }}
+        maxWidth="md"
+        fullWidth
+        TransitionProps={{
+          enter: false,
+          exit: false
+        }}
+        sx={{
+          '& .MuiDialog-paper': {
+            transition: 'none !important'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid #e0e0e0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 24px',
+          backgroundColor: '#f8f9fa'
+        }}>
+          <Box>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+              Chọn câu hỏi
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+              <Chip
+                label={subjects.find(s => s.id === selectedSubjectId)?.subjectName}
+                color="info"
+                size="small"
+                variant="outlined"
+                icon={<SubjectIcon />}
+                sx={{ 
+                  fontWeight: 500,
+                  '& .MuiChip-icon': { 
+                    fontSize: 18 
                   }
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setOpenQuestionDialog(false)}>Đóng</Button>
-      </DialogActions>
-    </Dialog>
-  );
+                }}
+              />
+              <Chip
+                label={`Đã chọn: ${selectedQuestions.length}`}
+                color="primary"
+                size="small"
+                icon={<CheckCircleOutlineIcon />}
+                sx={{ 
+                  fontWeight: 500,
+                  backgroundColor: selectedQuestions.length > 0 ? 'primary.main' : 'grey.300',
+                  '& .MuiChip-icon': { 
+                    fontSize: 18 
+                  }
+                }}
+              />
+            </Box>
+          </Box>
+          {/* Nút Xóa tất cả */}
+          <Button
+            variant="outlined"
+            size="small"
+            color="error"
+            onClick={handleClearAll}
+            startIcon={<DeleteSweepIcon />}
+            disabled={selectedQuestions.length === 0}
+            sx={{
+              '&.Mui-disabled': {
+                borderColor: 'grey.300',
+                color: 'grey.400'
+              }
+            }}
+          >
+            Xóa tất cả
+          </Button>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{ mb: 2, mt: 1 }}>
+            <OutlinedInput
+              inputRef={searchInputRef}
+              fullWidth
+              autoFocus
+              placeholder="Tìm kiếm câu hỏi..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+              onBlur={(e) => {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+              }}
+              startAdornment={
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              }
+              endAdornment={
+                searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => {
+                        setSearchQuery('');
+                        setDebouncedSearchQuery('');
+                        searchInputRef.current?.focus();
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }
+              size="small"
+            />
+          </Box>
+          <List sx={{ width: '100%', bgcolor: 'background.paper', pt: 0 }}>
+            {questions
+              .filter(question => 
+                question.subject.id === selectedSubjectId && 
+                question.questionText.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+              )
+              .map((question, index) => (
+                <ListItem 
+                  key={question.id} 
+                  disablePadding
+                  sx={{
+                    borderBottom: '1px solid #f0f0f0',
+                    '&:hover': {
+                      backgroundColor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <ListItemButton 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleQuestionSelect(question);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Checkbox
+                        edge="start"
+                        checked={selectedQuestions.some(
+                          selectedQ => selectedQ.questionText === question.questionText
+                        )}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          // Chỉ gọi handleQuestionSelect khi trạng thái checkbox thực sự thay đổi
+                          if (e.target.checked !== selectedQuestions.some(
+                            selectedQ => selectedQ.questionText === question.questionText
+                          )) {
+                            handleQuestionSelect(question);
+                          }
+                        }}
+                        tabIndex={-1}
+                        disableRipple
+                        sx={{
+                          '& .MuiSvgIcon-root': {
+                            transition: 'none !important'
+                          },
+                          '&:hover': {
+                            backgroundColor: 'transparent'
+                          }
+                        }}
+                      />
+                    </ListItemIcon>
+                    <Box sx={{ flex: 1, py: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                            Câu {index + 1}. {question.questionText}
+                          </Typography>
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => toggleAnswers(question.id, e)}
+                            sx={{ ml: 1 }}
+                          >
+                            {showAnswers[question.id] ? 
+                              <VisibilityOffIcon fontSize="small" /> : 
+                              <VisibilityIcon fontSize="small" />
+                            }
+                          </IconButton>
+                        </Box>
+                        <Chip 
+                          label={`Độ khó: ${question.level}`}
+                          size="small"
+                          color={question.level === 1 ? "success" : question.level === 2 ? "warning" : "error"}
+                        />
+                      </Box>
+                      {/* Hiển thị đáp án chỉ khi câu hỏi đó được toggle */}
+                      {showAnswers[question.id] && (
+                        <Box sx={{ pl: 2 }}>
+                          {question.answers?.map((answer, idx) => (
+                            <Typography 
+                              key={idx} 
+                              variant="body2" 
+                              sx={{ 
+                                color: answer.isCorrect ? 'success.main' : 'text.primary',
+                                mb: 0.5,
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Box 
+                                component="span" 
+                                sx={{ 
+                                  minWidth: '24px',
+                                  height: '24px',
+                                  borderRadius: '12px',
+                                  backgroundColor: answer.isCorrect ? 'success.light' : 'grey.200',
+                                  color: answer.isCorrect ? 'white' : 'text.primary',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  mr: 1,
+                                  fontSize: '0.875rem'
+                                }}
+                              >
+                                {String.fromCharCode(65 + idx)}
+                              </Box>
+                              {answer.answerText}
+                            </Typography>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ 
+          borderTop: '1px solid #e0e0e0',
+          padding: '16px 24px'
+        }}>
+          <Button 
+            onClick={() => setOpenQuestionDialog(false)}
+            variant="outlined"
+            startIcon={<CloseIcon />}
+          >
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
 
   // Hàm mở dialog chỉnh sửa câu hỏi
   const handleEditQuestion = (question) => {
@@ -666,44 +971,360 @@ const ExamManagement = () => {
     }
   };
 
+  // Thêm hàm xử lý khi chọn môn học từ sidebar
+  const handleSubjectSelect = (subjectId) => {
+    setSelectedSubjectId(subjectId);
+    setFormData(prev => ({
+      ...prev,
+      subjectId: subjectId
+    }));
+  };
+
+  // Lọc câu hỏi theo môn học được chọn
+  const filteredQuestions = useMemo(() => {
+    if (!selectedSubjectId) return [];
+    return questions.filter(question => question.subject.id === selectedSubjectId);
+  }, [questions, selectedSubjectId]);
+
+  const filteredQuestionList = useMemo(() => {
+    return questions.filter(question => 
+      question.questionText.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+  }, [questions, debouncedSearchQuery]);
+
+  const CreateExamDialog = () => {
+    // Tách state form ra
+    const [formValues, setFormValues] = useState({
+      quizName: '',
+      duration: ''
+    });
+
+    // Xử lý thay đổi input
+    const handleInputChange = (field) => (event) => {
+      const value = event.target.value;
+      setFormValues(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    };
+
+    // Xử lý đóng dialog
+    const handleClose = () => {
+      setOpenDialog(false);
+      setFormValues({ quizName: '', duration: '' });
+      setSelectedQuestions([]); // Reset selected questions
+    };
+
+    // Xử lý tạo đề thi
+    const handleSubmit = () => {
+      setFormData(prev => ({
+        ...formData,
+        quizName: formValues.quizName,
+        duration: formValues.duration
+      }))
+      handleCreateExam();
+      setFormValues({ quizName: '', duration: '' });
+      setSelectedQuestions([]); // Reset selected questions
+    };
+
+    return (
+      <Dialog 
+        open={openDialog} 
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            minWidth: '600px'
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            borderBottom: '1px solid #e0e0e0',
+            backgroundColor: '#f8f9fa',
+            padding: '16px 24px',
+            paddingBottom: '16px',
+            marginBottom: '8px',
+          }}
+        >
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Tạo đề thi mới
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+            <Chip
+              label={subjects.find(s => s.id === formData.subjectId)?.subjectName}
+              color="info"
+              size="small"
+              variant="outlined"
+              icon={<SubjectIcon />}
+              sx={{ fontWeight: 500 }}
+            />
+          </Box>
+        </DialogTitle>
+
+        <DialogContent 
+          sx={{ 
+            padding: '24px',
+            paddingTop: '16px',
+            marginTop: '10px'
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <TextField
+              fullWidth
+              label="Tên đề thi"
+              value={formValues.quizName}
+              onChange={handleInputChange('quizName')}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ pl: 0.5 }}>
+                    <DriveFileRenameOutlineIcon color="action" sx={{ fontSize: 20 }} />
+                  </InputAdornment>
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  paddingLeft: '8px'
+                },
+                '& .MuiInputLabel-outlined': {
+                  transform: 'translate(14px, 16px) scale(1)'
+                },
+                '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -5px) scale(0.75)'
+                }
+              }}
+            />
+
+            <TextField
+              fullWidth
+              label="Thời gian làm bài"
+              type="number"
+              value={formValues.duration}
+              onChange={handleInputChange('duration')}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <TimerIcon color="action" sx={{ fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">phút</InputAdornment>
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  paddingLeft: '8px'
+                },
+                '& .MuiInputLabel-outlined': {
+                  transform: 'translate(14px, 16px) scale(1)'
+                },
+                '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -6px) scale(0.75)'
+                }
+              }}
+            />
+
+            <TextField
+              fullWidth
+              label="Môn học"
+              value={subjects.find(s => s.id === formData.subjectId)?.subjectName || ''}
+              disabled
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SubjectIcon color="action" sx={{ fontSize: 20 }} />
+                  </InputAdornment>
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  paddingLeft: '8px'
+                },
+                '& .MuiInputLabel-outlined': {
+                  transform: 'translate(14px, 16px) scale(1)'
+                },
+                '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -6px) scale(0.75)'
+                }
+              }}
+            />
+
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              backgroundColor: '#f5f5f5',
+              padding: '12px 16px',
+              borderRadius: '8px'
+            }}>
+              <QuizIcon color="primary" />
+              <Typography>
+                Số câu hỏi đã chọn: 
+                <Typography
+                  component="span"
+                  sx={{ 
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    ml: 1
+                  }}
+                >
+                  {selectedQuestions.length}
+                </Typography>
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<EditIcon />}
+                onClick={() => setOpenQuestionDialog(true)}
+                sx={{ ml: 'auto' }}
+              >
+                Chọn câu hỏi
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ 
+          borderTop: '1px solid #e0e0e0',
+          padding: '16px 24px',
+          gap: 1
+        }}>
+          <Button 
+            onClick={handleClose}
+            variant="outlined"
+            startIcon={<CloseIcon />}
+          >
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            variant="contained"
+            startIcon={<SaveIcon />}
+            disabled={!formValues.quizName || !formValues.duration || selectedQuestions.length === 0}
+          >
+            Tạo đề thi
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
+  // Thêm hàm xử lý xóa câu hỏi khỏi danh sách đã chọn
+  const handleRemoveQuestion = useCallback((questionId) => {
+    setSelectedQuestions(prev => prev.filter(q => q.id !== questionId));
+  }, []);
+
+  // Thêm hàm xử lý cập nhật đề thi
+  const handleUpdateExam = async () => {
+    try {
+      const payload = {
+        id: editFormData.id,
+        quizName: editFormData.quizName,
+        totalQuestion: selectedQuestions.length,
+        duration: parseInt(editFormData.duration),
+        subjectId: editFormData.subjectId,
+        questionIds: selectedQuestions.map(q => q.id)
+      };
+
+      const response = await fetch(`http://26.184.129.66:8080/api/v1/quizzes/${editFormData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast.success('Cập nhật đề thi thành công');
+        setOpenEditDialog(false);
+        fetchExams(); // Cập nhật lại danh sách đề thi
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Lỗi khi cập nhật đề thi');
+      }
+    } catch (error) {
+      console.error('Lỗi khi cập nhật đề thi:', error);
+      toast.error('Lỗi khi cập nhật đề thi');
+    }
+  };
+
+  // Hàm toggle hiển thị đáp án cho câu hỏi đã chọn
+  const toggleSelectedAnswers = useCallback((questionId, event) => {
+    event.stopPropagation();
+    setShowSelectedAnswers(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  }, []);
+
+  // Sửa lại hàm mở dialog chọn câu hỏi
+  const handleOpenQuestionDialog = () => {
+    setOpenQuestionDialog(true);
+  };
+
+  // Sửa lại hàm mở dialog import
+  const handleOpenImportDialog = () => {
+    setImportFormData({
+      ...importFormData,
+      subjectId: selectedSubjectId // Lấy môn học đang được chọn từ sidebar
+    });
+    setOpenImportDialog(true);
+  };
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
-      {/* Sidebar */}
+      {/* Thêm sidebar chọn môn học */}
       <Box
         sx={{
-        width: '15%', backgroundColor: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #ccc',
-      }}
-      >     
-        <Box sx={{
-          backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px', fontWeight: 'bold',
-          textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', marginBottom: '10px',
+          width: '15%',
+          backgroundColor: '#fff',
+          padding: '10px',
+          borderRadius: '8px',
+          border: '1px solid #ccc',
         }}
-        >
+      >
+        <Box sx={{
+          backgroundColor: '#f5f5f5',
+          padding: '10px',
+          borderRadius: '4px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          marginBottom: '10px',
+        }}>
           Môn học
         </Box>
         {subjects.map((subject) => (
           <Box
             key={subject.id}
             sx={{
-              backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#f5f5f5', // Màu nền thay đổi khi được chọn
-              padding: '10px', marginBottom: '8px', borderRadius: '4px',
-              textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', // Hiệu ứng bóng
+              backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#f5f5f5',
+              padding: '10px',
+              marginBottom: '8px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
               '&:hover': {
-                backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#e0e0e0', // Hover vẫn giữ được màu nếu chọn
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)', // Hiệu ứng bng khi hover
+                backgroundColor: subject.id === selectedSubjectId ? '#BFEFFF' : '#e0e0e0',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
               },
             }}
-            onClick={() => setSelectedSubjectId(subject.id)}
+            onClick={() => handleSubjectSelect(subject.id)}
           >
             <Typography>
               {subject.subjectName}
             </Typography>
           </Box>
         ))}
-      </Box>  
+      </Box>
 
-      {/* Main Content */}
-      <Box sx={{ flex: 1,p: 3 }}>
+      {/* Giữ nguyên phần nội dung chính */}
+      <Box sx={{ flex: 1, p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
@@ -719,7 +1340,7 @@ const ExamManagement = () => {
               <Button
                 variant="contained"
                 color="secondary"
-                onClick={() => setOpenImportDialog(true)}
+                onClick={handleOpenImportDialog}
                 startIcon={<FileUploadIcon />}
               >
                 Import
@@ -821,209 +1442,191 @@ const ExamManagement = () => {
         )}
 
         {/* Dialog tạo đề thi mới */}
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Tạo đề thi mới</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Tên đề thi"
-                  value={formData.quizName}
-                  onChange={(e) => setFormData({ ...formData, quizName: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Môn học</InputLabel>
-                  <Select
-                    value={formData.subjectId}
-                    onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
-                  >
-                    {subjects.map((subject) => (
-                      <MenuItem key={subject.id} value={subject.id}>
-                        {subject.subjectName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Thời gian làm bài (phút)"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                />
-              </Grid>
-              {/* <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Số câu hỏi"
-                  value={formData.totalQuestion}
-                  onChange={(e) => setFormData({ ...formData, totalQuestion: e.target.value })}
-                />
-              </Grid> */}
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => setOpenQuestionDialog(true)}
-                  startIcon={<AddIcon />}
-                >
-                  Chọn câu hỏi ({selectedQuestions.length} câu đã chọn)
-                </Button>
-              </Grid>
-
-              {selectedQuestions.length > 0 && (
-                <Grid item xs={12}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Câu hỏi đã chọn:
-                    </Typography>
-                    <List dense>
-                      {selectedQuestions.map((question, index) => (
-                        <ListItem key={question.id}>
-                          <ListItemText
-                            primary={`${index + 1}. ${question.questionText}`}
-                          />
-                          <IconButton 
-                            edge="end" 
-                            onClick={() => handleQuestionSelect(question)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
-                </Grid>
-              )}
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Hủy</Button>
-            <Button 
-              onClick={handleCreateExam} 
-              variant="contained" 
-              color="primary"
-              disabled={selectedQuestions.length === 0}
-            >
-              Tạo đề thi
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <CreateExamDialog />
 
         {/* Dialog chỉnh sửa đề thi */}
-        <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Chỉnh sửa đề thi</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Tên đề thi"
+        <Dialog 
+          open={openEditDialog} 
+          onClose={() => setOpenEditDialog(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ 
+            sx: { 
+              minWidth: '800px',
+              minHeight: '400px',
+              position: 'fixed',
+              top: '15%',
+              '& .MuiDialogTitle-root': {
+                padding: '16px 24px',
+              },
+              '& .MuiDialogContent-root': {
+                padding: '16px 24px',
+              },
+              '& .MuiDialogActions-root': {
+                padding: '16px 24px',
+              }
+            } 
+          }}
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: 1.5,
+            pb: 2,
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" sx={{ fontSize: '1.5rem' }}>Chỉnh sửa đề thi</Typography>
+              <IconButton onClick={() => setOpenEditDialog(false)} size="medium">
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <Chip 
+              label="Math" 
+              icon={<SubjectIcon />} 
+              size="medium"
+              sx={{ 
+                alignSelf: 'flex-start',
+                backgroundColor: '#e3f2fd',
+                color: '#1976d2',
+                '& .MuiChip-icon': {
+                  color: '#1976d2'
+                }
+              }}
+            />
+          </DialogTitle>
+
+          <DialogContent sx={{ pt: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <FormControl fullWidth>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 0.5,
+                    color: 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <DriveFileRenameOutlineIcon fontSize="small" />
+                  Tên đề thi
+                </Typography>
+                <OutlinedInput
                   value={editFormData.quizName}
                   onChange={(e) => setEditFormData({ ...editFormData, quizName: e.target.value })}
+                  size="small"
+                  placeholder="Nhập tên đề thi"
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Môn học</InputLabel>
-                  <Select
-                    value={editFormData.subjectId}
-                    onChange={(e) => setEditFormData({ ...editFormData, subjectId: e.target.value })}
-                  >
-                    {subjects.map((subject) => (
-                      <MenuItem key={subject.id} value={subject.id}>
-                        {subject.subjectName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
+              </FormControl>
+
+              <FormControl fullWidth>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 0.5,
+                    color: 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <TimerIcon fontSize="small" />
+                  Thời gian làm bài
+                </Typography>
+                <OutlinedInput
                   type="number"
-                  label="Thời gian làm bài (phút)"
                   value={editFormData.duration}
                   onChange={(e) => setEditFormData({ ...editFormData, duration: e.target.value })}
+                  size="small"
+                  placeholder="Nhập thời gian"
+                  endAdornment={<InputAdornment position="end">phút</InputAdornment>}
                 />
-              </Grid>
+              </FormControl>
 
-              {/* Phần quản lý câu hỏi */}
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => setOpenQuestionDialog(true)}
-                  startIcon={<AddIcon />}
+              <FormControl fullWidth>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    mb: 0.5,
+                    color: 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
                 >
-                  Quản lý câu hỏi ({selectedQuestions.length} câu đã chọn)
-                </Button>
-              </Grid>
+                  <SubjectIcon fontSize="small" />
+                  Môn học
+                </Typography>
+                <Select
+                  value={editFormData.subjectId}
+                  onChange={(e) => setEditFormData({ ...editFormData, subjectId: e.target.value })}
+                  size="small"
+                  disabled
+                  sx={{
+                    backgroundColor: '#f5f5f5',
+                    '& .MuiSelect-select': {
+                      color: 'text.primary'
+                    }
+                  }}
+                >
+                  {subjects.map((subject) => (
+                    <MenuItem key={subject.id} value={subject.id}>
+                      {subject.subjectName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              {/* Hiển thị danh sách câu hỏi đã chọn */}
-              {selectedQuestions.length > 0 && (
-                <Grid item xs={12}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Câu hỏi trong đề thi:
-                    </Typography>
-                    <List dense>
-                      {selectedQuestions.map((question, index) => (
-                        <ListItem key={question.id}>
-                          <ListItemText
-                            primary={`${index + 1}. ${question.questionText}`}
-                            secondary={
-                              <Typography variant="body2" color="textSecondary">
-                                {question.answerHistories?.map((answer, i) => (
-                                  answer.isCorrect === 1 ? 
-                                    `Đáp án đúng: ${answer.answerText}` : ''
-                                )).filter(Boolean).join(', ')}
-                              </Typography>
-                            }
-                          />
-                          <IconButton 
-                            edge="end" 
-                            onClick={() => handleEditQuestion(question)}
-                            color="primary"
-                            sx={{ mr: 1 }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton 
-                            edge="end" 
-                            onClick={() => handleQuestionSelect(question)}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
-                </Grid>
-              )}
-            </Grid>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                bgcolor: '#f5f5f5',
+                borderRadius: 1,
+                p: 2
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <QuizIcon sx={{ color: 'primary.main' }} fontSize="small" />
+                  <Typography variant="body2">
+                    Số câu hỏi đã chọn: {selectedQuestions.length}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="text"
+                  color="primary"
+                  onClick={handleOpenQuestionDialog}
+                  startIcon={<EditIcon />}
+                  size="small"
+                >
+                  CHỌN CÂU HỎI
+                </Button>
+              </Box>
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => {
-              setOpenEditDialog(false);
-              setSelectedQuestions([]);
-            }}>
-              Hủy
-            </Button>
+
+          <DialogActions sx={{ 
+            p: 3, 
+            gap: 2,
+            borderTop: '1px solid #e0e0e0'
+          }}>
             <Button 
-              onClick={() => handleSaveEdit(editFormData.id)} 
-              variant="contained" 
-              color="primary"
-              disabled={selectedQuestions.length === 0}
+              onClick={() => setOpenEditDialog(false)}
+              variant="outlined"
+              size="medium"
+              sx={{ minWidth: '100px' }}
             >
-              Lưu thay đổi
+              HỦY
+            </Button>
+            <Button
+              onClick={() => handleSaveEdit(editFormData.id)}
+              variant="contained"
+              startIcon={<SaveIcon />}
+              size="medium"
+              sx={{ minWidth: '150px' }}
+              disabled={!editFormData.quizName || !editFormData.subjectId || !editFormData.duration || selectedQuestions.length === 0}
+            >
+              SỬA ĐỀ THI
             </Button>
           </DialogActions>
         </Dialog>
@@ -1048,7 +1651,7 @@ const ExamManagement = () => {
                 <Select
                   value={questionFormData.level}
                   onChange={(e) => setQuestionFormData({...questionFormData, level: e.target.value})}
-                  label="Cap do"
+                  label="Cấp độ"
                 >
                   <MenuItem value={1}>Dễ</MenuItem>
                   <MenuItem value={2}>Trung bình</MenuItem>
@@ -1090,7 +1693,7 @@ const ExamManagement = () => {
         <Dialog open={openImportDialog} onClose={() => setOpenImportDialog(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Import Đề Thi</DialogTitle>
           <DialogContent>
-            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               <TextField
                 fullWidth
                 label="Tên đề thi"
@@ -1098,13 +1701,11 @@ const ExamManagement = () => {
                 onChange={(e) => setImportFormData({ ...importFormData, quizName: e.target.value })}
               />
               
-              <FormControl fullWidth>
-                <InputLabel id="subject-select-label">Môn học</InputLabel>
+              <FormControl fullWidth disabled>
+                <InputLabel>Môn học</InputLabel>
                 <Select
-                  labelId="subject-select-label"
-                  label="Môn học"
                   value={importFormData.subjectId}
-                  onChange={(e) => setImportFormData({ ...importFormData, subjectId: e.target.value })}
+                  label="Môn học"
                 >
                   {subjects.map((subject) => (
                     <MenuItem key={subject.id} value={subject.id}>
@@ -1189,13 +1790,13 @@ const ExamManagement = () => {
           onClose={handleClose}
         >
           <MenuItem onClick={() => {
-            handleExportWord(selectedExamId, 5); // templateId
+            handleExportWord(selectedExamId, 1); // templateId
             handleClose();
           }}>
             Xuất file Word
           </MenuItem>
           <MenuItem onClick={() => {
-            handleExportPDF(selectedExamId, 4); // templateId
+            handleExportPDF(selectedExamId, 2); // templateId
             handleClose();
           }}>
             Xuất file PDF

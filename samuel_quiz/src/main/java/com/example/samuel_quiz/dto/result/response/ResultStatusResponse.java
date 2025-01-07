@@ -1,19 +1,16 @@
 package com.example.samuel_quiz.dto.result.response;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-
-import com.example.samuel_quiz.dto.quiz.QuizDTO;
-import com.example.samuel_quiz.dto.user.UserDTO;
-
+import com.example.samuel_quiz.dto.user.response.UserResponse;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ResultResponse {
+public class ResultStatusResponse {
     Long id;
     double score;
     Integer totalCorrect;
@@ -22,7 +19,7 @@ public class ResultResponse {
     LocalDateTime submitTime;
     Long examDuration;
     Long quizId;
-    String userId;
+    UserResponse user;
     Long subjectId;
     String quizName;
     List<QuestionResultResponse> questionResults;

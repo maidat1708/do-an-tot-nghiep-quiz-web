@@ -5,10 +5,7 @@ import com.example.samuel_quiz.dto.result.ResultDTO;
 import com.example.samuel_quiz.dto.result.ResultDetailDTO;
 import com.example.samuel_quiz.dto.result.request.ResultCreateRequest;
 import com.example.samuel_quiz.dto.result.request.ResultUpdateRequest;
-import com.example.samuel_quiz.dto.result.response.AnswerResultResponse;
-import com.example.samuel_quiz.dto.result.response.QuestionResultResponse;
-import com.example.samuel_quiz.dto.result.response.ResultExamSessionResponse;
-import com.example.samuel_quiz.dto.result.response.ResultResponse;
+import com.example.samuel_quiz.dto.result.response.*;
 import com.example.samuel_quiz.entities.Result;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -44,6 +41,16 @@ public interface ResultMapper extends BaseMapper<Result, ResultDTO> {
     @Mapping(target = "questionResults", source = "resultDetails")
     @Mapping(target = "quizName", source = "quiz.quizName")
     ResultResponse toResultResponse(ResultDTO resultDTO);
+
+    @Mapping(target = "quizId", source = "quiz.id")
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "submitTime", source = "timeEnd")
+    @Mapping(target = "timeStart", source = "timeStart")
+    @Mapping(target = "examDuration", source = "examDuration")
+    @Mapping(target = "totalCorrect", source = "correctAnswer")
+    @Mapping(target = "questionResults", source = "resultDetails")
+    @Mapping(target = "quizName", source = "quiz.quizName")
+    ResultStatusResponse toResultStatusResponse(ResultDTO resultDTO);
 
     @Mapping(target = "quizId", source = "quiz.id")
     @Mapping(target = "user", ignore = true)

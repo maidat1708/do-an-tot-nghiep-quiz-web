@@ -8,6 +8,7 @@ import com.example.samuel_quiz.dto.result.response.ResultResponse;
 import com.example.samuel_quiz.entities.Result;
 import com.example.samuel_quiz.entities.User;
 import com.example.samuel_quiz.entities.Quiz;
+import com.example.samuel_quiz.mapper.ProfileMapper;
 import com.example.samuel_quiz.mapper.QuizMapper;
 import com.example.samuel_quiz.mapper.ResultMapper;
 import com.example.samuel_quiz.mapper.UserMapper;
@@ -46,6 +47,9 @@ public class ResultService implements IResultService {
 
     @Autowired
     QuizRepository quizRepo;
+
+    @Autowired
+    ProfileMapper profileMapper;
 
     @Override
     public List<ResultResponse> getResults() {

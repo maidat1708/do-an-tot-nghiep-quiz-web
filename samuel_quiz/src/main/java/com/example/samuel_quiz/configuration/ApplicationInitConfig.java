@@ -1,6 +1,7 @@
 //TODO: đạt tên package không đúng chuẩn
 package com.example.samuel_quiz.configuration;
 
+import com.example.samuel_quiz.entities.Profile;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,13 @@ public class ApplicationInitConfig {
                         .password(passwordEncoder.encode("admin"))
                         .role(roles)
                         .build();
-
+                Profile profile = Profile.builder()
+                            .email("admin@gmail.com")
+                            .firstName("Samuel")
+                            .lastName("Dennis")
+                            .user(user)
+                            .build();
+                user.setProfile(profile);
                 userRepository.save(user);
                 log.warn("admin user has been created with default password: admin, please change it");
                 log.info(user.getRole());

@@ -440,7 +440,7 @@ public class QuizService implements IQuizService {
 
         // Cập nhật và lưu Result
         result.setCorrectAnswer(correctAnswers);
-        result.setScore((float) correctAnswers / quiz.getTotalQuestion() * 10);
+        result.setScore((double) correctAnswers / quiz.getTotalQuestion() * 10);
         result.setResultDetails(resultDetails);
         if(request.getExamSessionId() != null) {
             result.setExamSession(examSessionRepository.findById(request.getExamSessionId()).orElse(null));

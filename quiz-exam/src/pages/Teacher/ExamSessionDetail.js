@@ -18,16 +18,25 @@ import {
   AccordionDetails,
   Radio,
   FormControlLabel,
-  RadioGroup
+  RadioGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import { ExpandMore } from '@mui/icons-material';
+import ExamSessionStats from '../../components/ExamSessionStats';
 
 const ExamSessionDetail = () => {
   const { examSessionId } = useParams();
   const navigate = useNavigate();
   const [examSession, setExamSession] = useState(null);
   const [results, setResults] = useState([]);
+  const [openStats, setOpenStats] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Fetch thông tin chi tiết ca thi
   useEffect(() => {
@@ -104,6 +113,59 @@ const ExamSessionDetail = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const fetchResults = async () => {
+    try {
+      const response = await fetch(
+        `http://26.184.129.66:8080/api/v1/exam-sessions/${examSessionId}/results`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.code === 200) {
+        setResults(data.result);
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải kết quả');
+    }
+  };
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://26.184.129.66:8080/api/v1/exam-sessions/${examSessionId}/stats`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.code === 200) {
+        setStats(data.result);
+        setOpenStats(true);
+      } else {
+        toast.error(data.message || 'Lỗi khi tải thống kê');
+      }
+    } catch (error) {
+      toast.error('Lỗi khi tải thống kê');
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenStats = () => {
+    if (!stats) {
+      fetchStats();
+    } else {
+      setOpenStats(true);
+    }
   };
 
   if (!examSession) {
@@ -282,6 +344,35 @@ const ExamSessionDetail = () => {
           Xem kết quả
         </Button>
       </Box>
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleOpenStats}
+        disabled={loading}
+        startIcon={loading && <CircularProgress size={20} color="inherit" />}
+      >
+        {loading ? 'Đang tải...' : 'Xem Thống Kê'}
+      </Button>
+
+      <Dialog
+        open={openStats}
+        onClose={() => setOpenStats(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Thống Kê Kết Quả Ca Thi
+        </DialogTitle>
+        <DialogContent>
+          {stats && <ExamSessionStats stats={stats} />}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenStats(false)}>
+            Đóng
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -15,7 +15,7 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ResultDTO {
     Long id;
-    float score;
+    double score;
     Long totalQuestion;
     Long correctAnswer;
     Long examDuration;

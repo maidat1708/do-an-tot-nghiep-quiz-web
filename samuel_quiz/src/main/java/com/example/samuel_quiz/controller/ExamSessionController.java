@@ -4,6 +4,7 @@ import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.dto.examsession.request.ExamSessionCreateRequest;
 import com.example.samuel_quiz.dto.examsession.request.ExamSessionUpdateRequest;
 import com.example.samuel_quiz.dto.examsession.response.ExamSessionResponse;
+import com.example.samuel_quiz.dto.examsession.response.ExamSessionStatsResponse;
 import com.example.samuel_quiz.service.IExamSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -86,6 +87,15 @@ public class ExamSessionController {
             @PathVariable String studentId) {
         return APIResponse.<List<ExamSessionResponse>>builder()
                 .result(examSessionService.getExamSessionsByStudentId(studentId))
+                .build();
+    }
+
+    @GetMapping("/{id}/stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @Operation(summary = "Lấy thống kê điểm của ca thi")
+    public APIResponse<ExamSessionStatsResponse> getExamSessionStats(@PathVariable Long id) {
+        return APIResponse.<ExamSessionStatsResponse>builder()
+                .result(examSessionService.getExamSessionStats(id))
                 .build();
     }
 } 

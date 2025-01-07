@@ -18,7 +18,7 @@ public class Result {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "result_id_gen")
     @SequenceGenerator(name = "result_id_gen", sequenceName = "result_SEQ", allocationSize = 1)
     Long id;
-    float score;
+    double score;
     Long totalQuestion;
     Long correctAnswer;
     Long examDuration;

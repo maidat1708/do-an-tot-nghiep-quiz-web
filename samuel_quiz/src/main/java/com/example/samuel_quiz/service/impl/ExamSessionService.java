@@ -3,34 +3,45 @@ package com.example.samuel_quiz.service.impl;
 import com.example.samuel_quiz.dto.examsession.request.ExamSessionCreateRequest;
 import com.example.samuel_quiz.dto.examsession.request.ExamSessionUpdateRequest;
 import com.example.samuel_quiz.dto.examsession.response.ExamSessionResponse;
+import com.example.samuel_quiz.dto.examsession.response.ExamSessionStatsResponse;
 import com.example.samuel_quiz.dto.questionhistory.QuestionHistoryDTO;
+import com.example.samuel_quiz.dto.result.ResultDTO;
+import com.example.samuel_quiz.dto.result.response.ResultStatusResponse;
 import com.example.samuel_quiz.dto.subject.SubjectDTO;
 import com.example.samuel_quiz.entities.ExamSession;
 import com.example.samuel_quiz.entities.Quiz;
+import com.example.samuel_quiz.entities.Result;
 import com.example.samuel_quiz.entities.User;
 import com.example.samuel_quiz.enums.Role;
 import com.example.samuel_quiz.exception.AppException;
 import com.example.samuel_quiz.exception.ErrorCode;
-import com.example.samuel_quiz.mapper.ExamSessionMapper;
-import com.example.samuel_quiz.mapper.QuestionHistoryMapper;
-import com.example.samuel_quiz.mapper.SubjectMapper;
+import com.example.samuel_quiz.dto.result.response.ResultResponse;
+import com.example.samuel_quiz.dto.statistics.ResultTrend;
+import com.example.samuel_quiz.mapper.*;
 import com.example.samuel_quiz.repository.ExamSessionRepository;
 import com.example.samuel_quiz.repository.QuizRepository;
 import com.example.samuel_quiz.repository.UserRepository;
 import com.example.samuel_quiz.repository.ResultRepository;
 import com.example.samuel_quiz.service.IExamSessionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExamSessionService implements IExamSessionService {
     
     private final ExamSessionRepository examSessionRepository;
@@ -40,6 +51,9 @@ public class ExamSessionService implements IExamSessionService {
     private final ExamSessionMapper examSessionMapper;
     private final SubjectMapper subjectMapper;
     private final QuestionHistoryMapper questionHistoryMapper;
+    private final ResultMapper resultMapper;
+    private final UserMapper userMapper;
+    private final ProfileMapper profileMapper;
 
     private String calculateStatus(LocalDateTime startTime, LocalDateTime endTime) {
         LocalDateTime now = LocalDateTime.now();
@@ -183,6 +197,164 @@ public class ExamSessionService implements IExamSessionService {
                 return !hasCompleted && hasOngoing;
             })
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public ExamSessionStatsResponse getExamSessionStats(Long examSessionId) {
+        ExamSession examSession = examSessionRepository.findById(examSessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("ExamSession not found"));
+
+        List<Result> results = resultRepository.findByExamSessionId(examSessionId);
+        
+        if (results.isEmpty()) {
+            throw new AppException(ErrorCode.BAD_REQUEST, "No results found for this exam session");
+        }
+
+        List<Double> scores = results.stream()
+                .map(Result::getScore)
+                .collect(Collectors.toList());
+
+        double averageScore = calculateAverage(scores);
+        double medianScore = calculateMedian(scores);
+        double standardDeviation = calculateStandardDeviation(scores, averageScore);
+        
+        List<Result> topResults = getTopResults(results, 5); // Lấy top 5 điểm cao nhất
+        List<ResultTrend> scoreTrends = calculateScoreTrends(results);
+
+        return ExamSessionStatsResponse.builder()
+                .scoreDistribution(calculateScoreDistribution(scores))
+                .detailedScoreDistribution(calculateDetailedScoreDistribution(scores))
+                .averageScore(roundToTwoDecimals(averageScore))
+                .medianScore(roundToTwoDecimals(medianScore))
+                .highestScore(Collections.max(scores))
+                .lowestScore(Collections.min(scores))
+                .totalStudents(scores.size())
+                .passedStudents((int) scores.stream().filter(score -> score >= 5.0).count())
+                .passRate(roundToTwoDecimals((double) scores.stream().filter(score -> score >= 5.0).count() / scores.size() * 100))
+                .standardDeviation(roundToTwoDecimals(standardDeviation))
+                .gradeDistribution(calculateGradeDistribution(scores))
+                .topResults(topResults.stream().map(entity ->{
+                    ResultDTO resultDTO = resultMapper.toDto(entity);
+                    ResultStatusResponse resultStatusResponse = resultMapper.toResultStatusResponse(resultDTO);
+                    resultStatusResponse.setUser(userMapper.toUserResponse(userMapper.toDto(entity.getUser())));
+                    resultStatusResponse.getUser().setProfile(profileMapper.toDto(entity.getUser().getProfile()));
+                    return resultStatusResponse;
+                }).collect(Collectors.toList()))
+                .scoreTrends(scoreTrends)
+                .build();
+    }
+
+    // Tính điểm trung bình
+    private double calculateAverage(List<Double> scores) {
+        return scores.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+    }
+
+    // Tính độ lệch chuẩn
+    private double calculateStandardDeviation(List<Double> scores, double mean) {
+        double variance = scores.stream()
+                .mapToDouble(score -> Math.pow(score - mean, 2))
+                .average()
+                .orElse(0.0);
+        return Math.sqrt(variance);
+    }
+
+    // Tính phân bố điểm theo khoảng
+    private Map<String, Integer> calculateScoreDistribution(List<Double> scores) {
+        Map<String, Integer> distribution = new LinkedHashMap<>();
+        distribution.put("0-4", 0);
+        distribution.put("4-6", 0);
+        distribution.put("6-8", 0);
+        distribution.put("8-10", 0);
+
+        scores.forEach(score -> {
+            if (score < 4.0) distribution.merge("0-4", 1, Integer::sum);
+            else if (score < 6.0) distribution.merge("4-6", 1, Integer::sum);
+            else if (score < 8.0) distribution.merge("6-8", 1, Integer::sum);
+            else distribution.merge("8-10", 1, Integer::sum);
+        });
+
+        return distribution;
+    }
+
+    // Tính phân loại học lực
+    private Map<String, Integer> calculateGradeDistribution(List<Double> scores) {
+        Map<String, Integer> distribution = new LinkedHashMap<>();
+        distribution.put("Giỏi", 0);
+        distribution.put("Khá", 0);
+        distribution.put("TB", 0);
+        distribution.put("Yếu", 0);
+
+        scores.forEach(score -> {
+            if (score >= 8.0) distribution.merge("Giỏi", 1, Integer::sum);
+            else if (score >= 6.5) distribution.merge("Khá", 1, Integer::sum);
+            else if (score >= 5.0) distribution.merge("TB", 1, Integer::sum);
+            else distribution.merge("Yếu", 1, Integer::sum);
+        });
+
+        return distribution;
+    }
+
+    // Làm tròn đến 2 chữ số thập phân
+    private double roundToTwoDecimals(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    // Tính điểm trung vị
+    private double calculateMedian(List<Double> scores) {
+        List<Double> sortedScores = new ArrayList<>(scores);
+        Collections.sort(sortedScores);
+        int size = sortedScores.size();
+        if (size % 2 == 0) {
+            return (sortedScores.get(size/2 - 1) + sortedScores.get(size/2)) / 2.0;
+        } else {
+            return sortedScores.get(size/2);
+        }
+    }
+
+    // Lấy danh sách top điểm cao
+    private List<Result> getTopResults(List<Result> results, int limit) {
+        return results.stream()
+                .sorted(Comparator.comparing(Result::getScore).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    // Tính xu hướng điểm theo thời gian
+    private List<ResultTrend> calculateScoreTrends(List<Result> results) {
+        return results.stream()
+                .sorted(Comparator.comparing(Result::getTimeEnd))
+                .map(result -> ResultTrend.builder()
+                        .submitTime(result.getTimeEnd())
+                        .score(result.getScore())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // Tính phân phối điểm chi tiết hơn
+    private Map<String, Integer> calculateDetailedScoreDistribution(List<Double> scores) {
+        Map<String, Integer> distribution = new LinkedHashMap<>();
+        distribution.put("0-2", 0);
+        distribution.put("2-4", 0);
+        distribution.put("4-6", 0);
+        distribution.put("6-7", 0);
+        distribution.put("7-8", 0);
+        distribution.put("8-9", 0);
+        distribution.put("9-10", 0);
+
+        scores.forEach(score -> {
+            if (score < 2.0) distribution.merge("0-2", 1, Integer::sum);
+            else if (score < 4.0) distribution.merge("2-4", 1, Integer::sum);
+            else if (score < 6.0) distribution.merge("4-6", 1, Integer::sum);
+            else if (score < 7.0) distribution.merge("6-7", 1, Integer::sum);
+            else if (score < 8.0) distribution.merge("7-8", 1, Integer::sum);
+            else if (score < 9.0) distribution.merge("8-9", 1, Integer::sum);
+            else distribution.merge("9-10", 1, Integer::sum);
+        });
+
+        return distribution;
     }
 
     private ExamSession findExamSessionById(Long id) {
