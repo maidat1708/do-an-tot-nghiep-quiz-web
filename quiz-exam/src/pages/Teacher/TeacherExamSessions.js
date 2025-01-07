@@ -44,7 +44,7 @@ const TeacherExamSessions = () => {
   const { loginResponse } = useContext(AuthContext);
   const [examSessions, setExamSessions] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [examSession, setExamSession] = useState(null);
   const [selectedResult, setSelectedResult] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -316,6 +316,11 @@ const TeacherExamSessions = () => {
     return quizzes.filter(quiz => quiz.subject.id === selectedSubject.id);
   };
 
+  const getPageData = () => {
+    const filteredData = getFilteredExamSessions();
+    return filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Drawer
@@ -387,7 +392,7 @@ const TeacherExamSessions = () => {
           </Button>
         </Box>
 
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ mt: 2 }}>
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
@@ -402,7 +407,7 @@ const TeacherExamSessions = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {getFilteredExamSessions().map((session, index) => (
+              {getPageData().map((session, index) => (
                 <TableRow key={session.id}>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>{session.name}</TableCell>
@@ -453,12 +458,15 @@ const TeacherExamSessions = () => {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={examSessions.length}
+            count={getFilteredExamSessions().length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             labelRowsPerPage="Số hàng mỗi trang:"
+            labelDisplayedRows={({ from, to, count }) => 
+              `${from}-${to} của ${count}`
+            }
           />
         </TableContainer>
 
