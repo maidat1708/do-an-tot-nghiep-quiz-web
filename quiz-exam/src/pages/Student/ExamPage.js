@@ -75,11 +75,12 @@ const ExamPage = () => {
       const quizDurationInSeconds = quiz.duration * 60; // Chuyển thời gian làm bài từ phút sang giây
       const actualDurationInSeconds = Math.min(quizDurationInSeconds, remainingTimeInSeconds);
   
-      // Chuyển sang trang làm bài với thời gian đã tính
+      // Thêm allowReview vào state khi navigate
       navigate(`/exam/doing/${quiz.id}`, {
         state: {
           durationInSeconds: actualDurationInSeconds,
-          examSessionId: session.id
+          examSessionId: session.id,
+          allowReview: session.allowReview // Thêm allowReview vào state
         }
       });
     }

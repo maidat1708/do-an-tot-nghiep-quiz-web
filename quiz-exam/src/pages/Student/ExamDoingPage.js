@@ -148,9 +148,14 @@ const ExamDoingPage = () => {
             clearInterval(timer.current);
           }
 
-          // Set kết quả và hiển thị modal
-          setExamResult(result.result);
-          setShowResultsModal(true);
+          if(location.state?.allowReview != false){
+            // Set kết quả và hiển thị modal
+            setExamResult(result.result);
+            setShowResultsModal(true);
+          }
+          else{
+            navigate('/exam');
+          }
 
           // Log kết quả để debug
           console.log('Exam result:', result.result);
@@ -166,23 +171,11 @@ const ExamDoingPage = () => {
     }
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false); // Đóng popup nếu người dùng chọn Hủy
-    navigate('/exam/doing');
-  };
-
   const handleCloseResultsModal = () => {
     setShowResultsModal(false); // Đóng modal kết quả và chuyển hướng về trang kết quả
     navigate('/exam');
   };
-  const calculateScore = () => {
-    return (calculateCorrectAnswers() / questions.length) * 10;
-  };
 
-  const calculateCorrectAnswers = () => {
-    // Hàm tính số câu trả lời đúng
-    return Object.values(answers).filter(answer => answer === 'B').length;
-  };
   const handleBack = () => {
     const currentIndex = questions.findIndex(q => q.id === selectedQuestion.id);
     if (currentIndex > 0) {

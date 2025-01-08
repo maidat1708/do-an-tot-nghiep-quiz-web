@@ -35,7 +35,9 @@ import {
   ListItemIcon,
   Divider,
   Badge,
-  FormHelperText
+  FormHelperText,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import { Edit, Visibility, Assessment, School } from '@mui/icons-material';
@@ -58,7 +60,8 @@ const TeacherExamSessions = () => {
     startTime: '',
     endTime: '',
     teacherIds: new Set(),
-    studentIds: new Set()
+    studentIds: new Set(),
+    allowReview: false
   });
   const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
   const [updateData, setUpdateData] = useState({
@@ -67,7 +70,8 @@ const TeacherExamSessions = () => {
     startTime: '',
     endTime: '',
     teacherIds: new Set(),
-    studentIds: new Set()
+    studentIds: new Set(),
+    allowReview: false
   });
   const [selectedExamSession, setSelectedExamSession] = useState(null);
   const navigate = useNavigate();
@@ -238,7 +242,8 @@ const TeacherExamSessions = () => {
           startTime: '',
           endTime: '',
           teacherIds: new Set(),
-          studentIds: new Set()
+          studentIds: new Set(),
+          allowReview: false
         });
       } else {
         toast.error(data.message || 'Lỗi khi tạo ca thi');
@@ -256,7 +261,8 @@ const TeacherExamSessions = () => {
       startTime: examSession.startTime.slice(0, 16),
       endTime: examSession.endTime.slice(0, 16),
       teacherIds: new Set(examSession.teachers.map(t => t.id)),
-      studentIds: new Set(examSession.students.map(s => s.id))
+      studentIds: new Set(examSession.students.map(s => s.id)),
+      allowReview: examSession.allowReview
     });
     setOpenUpdateDialog(true);
   };
@@ -622,6 +628,20 @@ const TeacherExamSessions = () => {
                   </Select>
                 </FormControl>
               </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.allowReview}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        allowReview: e.target.checked
+                      })}
+                    />
+                  }
+                  label="Cho phép học sinh xem lại đáp án sau khi thi"
+                />
+              </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
@@ -778,6 +798,21 @@ const TeacherExamSessions = () => {
                     ))}
                   </Select>
                 </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={updateData.allowReview}
+                      onChange={(e) => setUpdateData({
+                        ...updateData,
+                        allowReview: e.target.checked
+                      })}
+                    />
+                  }
+                  label="Cho phép học sinh xem lại đáp án sau khi thi"
+                />
               </Grid>
             </Grid>
           </DialogContent>
