@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.example.samuel_quiz.dto.answer.AnswerDTO;
 import com.example.samuel_quiz.dto.question.QuestionDTO;
+import com.example.samuel_quiz.dto.question.QuestionPreviewDTO;
 import com.example.samuel_quiz.dto.quiz.QuizDTO;
 import com.example.samuel_quiz.dto.quiz.request.QuizImportRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
@@ -234,154 +235,6 @@ public class QuizService implements IQuizService {
 
     @Override
     @Transactional
-    public QuizResponse importQuiz(QuizImportRequest request) {
-        // Lấy Subject theo subjectId
-        Subject subject = subjectRepo.findById(request.getSubjectId())
-                .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-
-        try {
-            // Đọc questions từ file Excel
-            List<QuestionDTO> questions = excelService.readQuestionsFromExcel(request.getFile());
-            
-            // Tạo các Question và Answer entities
-            Set<QuestionHistory> questionHistories = questions.stream()
-                    .map(questionDTO -> {
-                        QuestionHistory questionHistory = new QuestionHistory();
-                        questionHistory.setQuestionText(questionDTO.getQuestionText());
-                        questionHistory.setLevel(questionDTO.getLevel());
-                        questionHistory.setSubject(subject);
-                        
-                        Set<AnswerHistory> answerHistories = questionDTO.getAnswers().stream()
-                                .map(answerDTO -> {
-                                    AnswerHistory answerHistory = new AnswerHistory();
-                                    answerHistory.setAnswerText(answerDTO.getAnswerText());
-                                    answerHistory.setIsCorrect(answerDTO.getIsCorrect());
-                                    answerHistory.setQuestionHistory(questionHistory);
-                                    return answerHistory;
-                                })
-                                .collect(Collectors.toSet());
-                        
-                        questionHistory.setAnswerHistories(answerHistories);
-                        return questionHistory;
-                    })
-                    .collect(Collectors.toSet());
-
-            // Tạo Quiz mới
-            Quiz quiz = Quiz.builder()
-                    .quizName(request.getQuizName())
-                    .duration(request.getDuration())
-                    .totalQuestion((long) questions.size())
-                    .subject(subject)
-                    .questionHistories(questionHistories)
-                    .status(1)
-                    .build();
-
-            Quiz savedQuiz = quizRepo.save(quiz);
-            return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
-            
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to process Excel file", e);
-        }
-    }
-
-    @Override
-    @Transactional
-    public QuizResponse importQuizFromWord(QuizImportRequest request) {
-        Subject subject = subjectRepo.findById(request.getSubjectId())
-                .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-
-        try {
-            List<QuestionDTO> questions = wordService.readQuestionsFromWord(request.getFile());
-            
-            Set<QuestionHistory> questionHistories = questions.stream()
-                    .map(questionDTO -> {
-                        QuestionHistory questionHistory = new QuestionHistory();
-                        questionHistory.setQuestionText(questionDTO.getQuestionText());
-                        questionHistory.setLevel(questionDTO.getLevel());
-                        questionHistory.setSubject(subject);
-                        
-                        Set<AnswerHistory> answerHistories = questionDTO.getAnswers().stream()
-                                .map(answerDTO -> {
-                                    AnswerHistory answerHistory = new AnswerHistory();
-                                    answerHistory.setAnswerText(answerDTO.getAnswerText());
-                                    answerHistory.setIsCorrect(answerDTO.getIsCorrect());
-                                    answerHistory.setQuestionHistory(questionHistory);
-                                    return answerHistory;
-                                })
-                                .collect(Collectors.toSet());
-                        
-                        questionHistory.setAnswerHistories(answerHistories);
-                        return questionHistory;
-                    })
-                    .collect(Collectors.toSet());
-
-            Quiz quiz = Quiz.builder()
-                    .quizName(request.getQuizName())
-                    .duration(request.getDuration())
-                    .totalQuestion((long) questions.size())
-                    .subject(subject)
-                    .questionHistories(questionHistories)
-                    .status(1)
-                    .build();
-
-            Quiz savedQuiz = quizRepo.save(quiz);
-            return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
-            
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to process Word file", e);
-        }
-    }
-
-    @Override
-    @Transactional
-    public QuizResponse importQuizFromPDF(QuizImportRequest request) {
-        Subject subject = subjectRepo.findById(request.getSubjectId())
-                .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-
-        try {
-            List<QuestionDTO> questions = pdfService.readQuestionsFromPDF(request.getFile());
-            
-            Set<QuestionHistory> questionHistories = questions.stream()
-                    .map(questionDTO -> {
-                        QuestionHistory questionHistory = new QuestionHistory();
-                        questionHistory.setQuestionText(questionDTO.getQuestionText());
-                        questionHistory.setLevel(questionDTO.getLevel());
-                        questionHistory.setSubject(subject);
-                        
-                        Set<AnswerHistory> answerHistories = questionDTO.getAnswers().stream()
-                                .map(answerDTO -> {
-                                    AnswerHistory answerHistory = new AnswerHistory();
-                                    answerHistory.setAnswerText(answerDTO.getAnswerText());
-                                    answerHistory.setIsCorrect(answerDTO.getIsCorrect());
-                                    answerHistory.setQuestionHistory(questionHistory);
-                                    return answerHistory;
-                                })
-                                .collect(Collectors.toSet());
-                        
-                        questionHistory.setAnswerHistories(answerHistories);
-                        return questionHistory;
-                    })
-                    .collect(Collectors.toSet());
-
-            Quiz quiz = Quiz.builder()
-                    .quizName(request.getQuizName())
-                    .duration(request.getDuration())
-                    .totalQuestion((long) questions.size())
-                    .subject(subject)
-                    .questionHistories(questionHistories)
-                    .status(1)
-                    .build();
-
-            Quiz savedQuiz = quizRepo.save(quiz);
-            return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
-            
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to process PDF file", e);
-        }
-    }
-
-    @Override
-    @Transactional
     public ResultResponse gradeQuiz(QuizSubmissionRequest request) {
         // Lấy thông tin quiz
         Quiz quiz = quizRepo.findById(request.getQuizId())
@@ -544,64 +397,94 @@ public class QuizService implements IQuizService {
     }
 
     @Override
-    public List<QuestionDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException {
-        List<QuestionDTO> questions;
+    public List<QuestionPreviewDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException {
+        List<QuestionPreviewDTO> questions = new ArrayList<>();
         
         switch (fileType.toLowerCase()) {
             case "pdf":
-                questions = pdfService.readQuestionsFromPDF(file);
+                // Đọc câu hỏi t� PDF và chuyển đổi sang QuestionPreviewDTO
+                List<QuestionDTO> pdfQuestions = pdfService.readQuestionsFromPDF(file);
+                questions = convertToPreviewQuestions(pdfQuestions);
                 break;
+                
             case "word":
-                questions = wordService.readQuestionsFromWord(file);
+                // Đọc câu hỏi t� Word và chuyển đổi sang QuestionPreviewDTO
+                List<QuestionDTO> wordQuestions = wordService.readQuestionsFromWord(file);
+                questions = convertToPreviewQuestions(wordQuestions);
                 break;
+                
+            case "excel":
+                // Đọc câu hỏi t� Excel và chuyển đổi sang QuestionPreviewDTO
+                List<QuestionDTO> excelQuestions = excelService.readQuestionsFromExcel(file);
+                questions = convertToPreviewQuestions(excelQuestions);
+                break;
+                
             default:
                 throw new AppException(ErrorCode.BAD_REQUEST, "Unsupported file type");
         }
         
-        // Phân loại câu hỏi thành hợp lệ và không hợp lệ
-        List<QuestionDTO> result = questions.stream()
-            .map(question -> {
-                // Validate câu hỏi
-                boolean isValid = validateQuestion(question);
-                question.setValid(isValid);
-                return question;
-            })
-            .collect(Collectors.toList());
-        
-        return result;
+        return questions;
     }
 
-    private boolean validateQuestion(QuestionDTO question) {
-        // Kiểm tra câu hỏi có hợp lệ không
+    private List<QuestionPreviewDTO> convertToPreviewQuestions(List<QuestionDTO> questions) {
+        return questions.stream()
+            .map(q -> {
+                QuestionPreviewDTO previewDTO = QuestionPreviewDTO.builder()
+                    .questionText(q.getQuestionText())
+                    .level(q.getLevel())
+                    .answers(q.getAnswers())
+                    .build();
+                    
+                // Validate câu hỏi
+                validatePreviewQuestion(previewDTO);
+                
+                return previewDTO;
+            })
+            .collect(Collectors.toList());
+    }
+
+    private void validatePreviewQuestion(QuestionPreviewDTO question) {
+        // Kiểm tra nội dung câu hỏi
         if (question.getQuestionText() == null || question.getQuestionText().trim().isEmpty()) {
+            question.setValid(false);
             question.setErrorMessage("Nội dung câu hỏi không được để trống");
-            return false;
+            return;
         }
-        
+
         // Kiểm tra đáp án
         if (question.getAnswers() == null || question.getAnswers().isEmpty()) {
+            question.setValid(false);
             question.setErrorMessage("Câu hỏi phải có ít nhất một đáp án");
-            return false;
+            return;
         }
-        
-        // Kiểm tra có đáp án đúng không
+
+        // Kiểm tra đáp án đúng
         boolean hasCorrectAnswer = question.getAnswers().stream()
-            .anyMatch(answer -> answer.getIsCorrect() == 1);
+                .anyMatch(answer -> answer.getIsCorrect() == 1);
         if (!hasCorrectAnswer) {
+            question.setValid(false);
             question.setErrorMessage("Câu hỏi phải có ít nhất một đáp án đúng");
-            return false;
+            return;
         }
-        
-        return true;
+
+        // Nếu pass hết các validation
+        question.setValid(true);
+        question.setErrorMessage(null);
     }
 
     @Override
     @Transactional
-    public QuizResponse importQuizAfterPreview(QuizImportRequest request, List<QuestionDTO> editedQuestions) {
+    public QuizResponse importQuizAfterPreview(QuizImportRequest request) {
+        List<QuestionPreviewDTO> editedQuestions = request.getQuestions();
+        // Validate input
+        if (editedQuestions == null || editedQuestions.isEmpty()){
+            throw new AppException(ErrorCode.BAD_REQUEST, "No questions toimport");
+        }
+
         Subject subject = subjectRepo.findById(request.getSubjectId())
                 .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
-                
-        // Tạo các Question và Answer từ câu hỏi đã chỉnh sửa
+
+        // Tạo các QuestionHistory và AnswerHistory từcâu hỏi đã chỉnh sửa
         Set<QuestionHistory> questionHistories = editedQuestions.stream()
                 .map(questionDTO -> {
                     QuestionHistory questionHistory = new QuestionHistory();

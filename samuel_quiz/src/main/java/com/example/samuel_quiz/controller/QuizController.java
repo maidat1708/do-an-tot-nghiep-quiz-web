@@ -20,9 +20,14 @@ import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
 import com.example.samuel_quiz.dto.auth.response.APIResponse;
 import com.example.samuel_quiz.service.IQuizService;
 import com.example.samuel_quiz.service.impl.PDFService;
+import com.example.samuel_quiz.dto.question.QuestionPreviewDTO;
+import com.example.samuel_quiz.dto.question.QuestionDTO;
+import com.example.samuel_quiz.exception.AppException;
+import com.example.samuel_quiz.exception.ErrorCode;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("quizzes")
@@ -67,30 +72,6 @@ public class QuizController {
         return APIResponse.<Void>builder().build();
     }
 
-    @PostMapping("/import-excel")
-    public APIResponse<QuizResponse> importQuiz(
-            @ModelAttribute QuizImportRequest request) {
-        return APIResponse.<QuizResponse>builder()
-                .result(quizService.importQuiz(request))
-                .build();
-    }
-
-    @PostMapping("/import-word")
-    public APIResponse<QuizResponse> importQuizFromWord(
-            @ModelAttribute QuizImportRequest request) {
-        return APIResponse.<QuizResponse>builder()
-                .result(quizService.importQuizFromWord(request))
-                .build();
-    }
-
-    @PostMapping("/import-pdf")
-    public APIResponse<QuizResponse> importQuizFromPDF(
-            @ModelAttribute QuizImportRequest request) {
-        return APIResponse.<QuizResponse>builder()
-                .result(quizService.importQuizFromPDF(request))
-                .build();
-    }
-
     @PostMapping("/submit")
     @Operation(summary = "Nộp bài và chấm điểm", description = "API để nộp bài và nhận kết quả chấm điểm")
     public APIResponse<ResultResponse> submitQuiz(
@@ -122,6 +103,47 @@ public class QuizController {
                 .header("Content-Disposition", "attachment; filename=quiz_" + quizId + ".pdf")
                 .contentLength(data.length)
                 .body(resource);
+    }
+
+    @PostMapping("/preview")
+    @Operation(summary = "Preview nội dung file", description = "Xem trước nội dung câu hỏi từ file")
+    public APIResponse<List<QuestionPreviewDTO>> previewQuestions(
+            @RequestPart("file") MultipartFile request) {
+        try {
+            String fileType = "";
+            String fileName = request.getOriginalFilename().toLowerCase();
+            if (fileName.endsWith(".pdf")) {
+                fileType = "pdf";
+            } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                fileType = "word";
+            } else if (fileName.endsWith(".xls") || fileName.endsWith(".xlsx")) {
+                fileType = "excel";
+            }
+            
+            List<QuestionPreviewDTO> questions = quizService.previewQuestionsFromFile(request, fileType);
+            return APIResponse.<List<QuestionPreviewDTO>>builder()
+                    .result(questions)
+                    .build();
+        } catch (IOException e) {
+            return APIResponse.<List<QuestionPreviewDTO>>builder()
+                    .message(e.getMessage())
+                    .build();
+        }
+    }
+
+    @PostMapping("/import-after-preview")
+    @Operation(summary = "Import sau khi preview", description = "Import đề thi sau khi xem trước và chỉnh sửa")
+    public APIResponse<QuizResponse> importAfterPreview(
+            @RequestBody QuizImportRequest request) {
+        try {
+            return APIResponse.<QuizResponse>builder()
+                    .result(quizService.importQuizAfterPreview(request))
+                    .build();
+        } catch (Exception e) {
+            return APIResponse.<QuizResponse>builder()
+                    .message(e.getMessage())
+                    .build();
+        }
     }
 
 }

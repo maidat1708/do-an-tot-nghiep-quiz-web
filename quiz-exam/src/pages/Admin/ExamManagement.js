@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from '
 import { Typography,Button,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Paper,Dialog,DialogTitle,DialogContent,
   DialogActions,TextField,FormControl,InputLabel,Select,MenuItem,Grid,IconButton,Box,List,ListItem,
   ListItemButton,ListItemIcon,ListItemText,Checkbox,Radio,FormControlLabel,Pagination,Tooltip,Chip, InputAdornment, OutlinedInput} from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Close as CloseIcon, DeleteSweep as DeleteSweepIcon, Check as CheckIcon, DriveFileRenameOutline as DriveFileRenameOutlineIcon, Timer as TimerIcon, Subject as SubjectIcon, Quiz as QuizIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Close as CloseIcon, DeleteSweep as DeleteSweepIcon, Check as CheckIcon, DriveFileRenameOutline as DriveFileRenameOutlineIcon, Timer as TimerIcon, Subject as SubjectIcon, Quiz as QuizIcon, South } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from "react-icons/fa";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -17,6 +17,8 @@ import Menu from '@mui/material/Menu';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 const ExamManagement = () => {
   const [exams, setExams] = useState([]);
@@ -74,6 +76,10 @@ const ExamManagement = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
+  const [previewQuestions, setPreviewQuestions] = useState([]);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [editingPreviewQuestion, setEditingPreviewQuestion] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -214,18 +220,19 @@ const ExamManagement = () => {
   };
 
   // Tạo đề thi mới
-  const handleCreateExam = async () => {
+  const handleCreateExam = async (value) => {
     try {
+      console.log(value)
       // Kiểm tra dữ liệu trước khi gửi
-      if (!formData.quizName || !formData.duration || !formData.subjectId) {
+      if (!value.quizName || !value.duration || !formData.subjectId) {
         toast.error('Vui lòng điền đầy đủ thông tin');
         return;
       }
 
       const examData = {
-        quizName: formData.quizName.trim(),
+        quizName: value.quizName.trim(),
         totalQuestion: selectedQuestions.length,
-        duration: parseInt(formData.duration),
+        duration: parseInt(value.duration),
         subjectId: formData.subjectId,
         questionIds: selectedQuestions.map(q => q.id)
       };
@@ -1017,12 +1024,7 @@ const ExamManagement = () => {
 
     // Xử lý tạo đề thi
     const handleSubmit = () => {
-      setFormData(prev => ({
-        ...formData,
-        quizName: formValues.quizName,
-        duration: formValues.duration
-      }))
-      handleCreateExam();
+      handleCreateExam(formValues);
       setFormValues({ quizName: '', duration: '' });
       setSelectedQuestions([]); // Reset selected questions
     };
@@ -1273,6 +1275,136 @@ const ExamManagement = () => {
       subjectId: selectedSubjectId // Lấy môn học đang được chọn từ sidebar
     });
     setOpenImportDialog(true);
+  };
+
+  // Thêm hàm xử lý preview file
+  const handlePreviewFile = async (file) => {
+    try {
+      // Nếu đã có dữ liệu preview và đang xem lại thì không cần gọi API
+      if (previewQuestions.length > 0 && showPreviewDialog === false) {
+        setShowPreviewDialog(true);
+        setOpenImportDialog(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://26.184.129.66:8080/api/v1/quizzes/preview', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewQuestions(data.result);
+        setShowPreviewDialog(true);
+        setOpenImportDialog(false);
+      } else {
+        const errorData = await response.json();
+        toast.error('Lỗi khi đọc file: ' + (errorData.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      toast.error('Lỗi khi đọc file');
+    }
+  };
+
+  // Thêm hàm xử lý import sau preview
+  const handleImportAfterPreview = async () => {
+    try {
+      const response = await fetch('http://26.184.129.66:8080/api/v1/quizzes/import-after-preview', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...importFormData,
+          questions: previewQuestions
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Import đề thi thành công');
+        handleCloseImport();
+      } else {
+        toast.error('Lỗi khi import đề thi');
+      }
+    } catch (error) {
+      console.error('Error importing exam:', error);
+      toast.error('Lỗi khi import đề thi');
+    }
+  };
+
+  // Sửa lại hàm đóng form import
+  const handleCloseImport = () => {
+    setOpenImportDialog(false);
+    setShowPreviewDialog(false);
+    setPreviewQuestions([]);
+    setImportFormData({
+      subjectId: '',
+      quizName: '',
+      duration: '',
+      file: null
+    });
+    fetchExams();
+  };
+
+  // Sửa lại hàm handleSavePreviewQuestion để cập nhật state chính xác
+  const handleSavePreviewQuestion = () => {
+    if (!editingPreviewQuestion) return;
+    
+    setPreviewQuestions(prevQuestions => 
+      prevQuestions.map(question => 
+        question === editingPreviewQuestion.originalQuestion 
+          ? { ...editingPreviewQuestion, originalQuestion: undefined } 
+          : question
+      )
+    );
+    setEditingPreviewQuestion(null);
+  };
+
+  // Sửa lại hàm handleEditPreviewQuestion để lưu câu hỏi gốc
+  const handleEditPreviewQuestion = (question) => {
+    setEditingPreviewQuestion({
+      ...question,
+      originalQuestion: question // Lưu lại câu hỏi gốc để so sánh khi update
+    });
+  };
+
+  // Thêm các hàm xử lý
+  const handleAddAnswer = () => {
+    if (!editingPreviewQuestion) return;
+    setEditingPreviewQuestion({
+      ...editingPreviewQuestion,
+      answers: [...editingPreviewQuestion.answers, { answerText: '', isCorrect: 0 }]
+    });
+  };
+
+  const handleRemoveAnswer = (indexToRemove) => {
+    if (!editingPreviewQuestion) return;
+    setEditingPreviewQuestion({
+      ...editingPreviewQuestion,
+      answers: editingPreviewQuestion.answers.filter((_, index) => index !== indexToRemove)
+    });
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+    setImportFormData({
+      ...importFormData,
+      file: file
+    });
+    
+    // Tự động gọi preview sau khi chọn file
+    if (file) {
+      await handlePreviewFile(file);
+    }
   };
 
   return (
@@ -1691,7 +1823,7 @@ const ExamManagement = () => {
         <ExamPopup open={isPopupOpen} onClose={handleClosePopup} examData={selectedExam} />
 
         <Dialog open={openImportDialog} onClose={() => setOpenImportDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Import Đề Thi</DialogTitle>
+          <DialogTitle>Import đề thi</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               <TextField
@@ -1751,6 +1883,8 @@ const ExamManagement = () => {
                 variant="outlined"
                 component="label"
                 startIcon={<CloudUploadIcon />}
+                sx={{ mt: 2 }}
+                fullWidth
               >
                 Chọn file {importType.toUpperCase()}
                 <input
@@ -1761,7 +1895,7 @@ const ExamManagement = () => {
                     importType === 'word' ? '.doc,.docx' :
                     '.pdf'
                   }
-                  onChange={(e) => setImportFormData({ ...importFormData, file: e.target.files[0] })}
+                  onChange={handleFileChange}
                 />
               </Button>
               {importFormData.file && (
@@ -1771,16 +1905,17 @@ const ExamManagement = () => {
               )}
             </Box>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: 2 }}>
             <Button onClick={() => setOpenImportDialog(false)}>Hủy</Button>
-            <Button
-              onClick={handleImportExam}
-              variant="contained"
-              color="primary"
-              disabled={!importFormData.file || !importFormData.quizName || !importFormData.subjectId || !importFormData.duration}
-            >
-              Import
-            </Button>
+            {selectedFile && (
+              <Button
+                variant="contained"
+                onClick={() => handlePreviewFile(importFormData.file)}
+                startIcon={<VisibilityIcon />}
+              >
+                Xem trước
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
 
@@ -1855,6 +1990,229 @@ const ExamManagement = () => {
               }
             }}>
               Đóng
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog Preview Câu hỏi */}
+        <Dialog 
+          open={showPreviewDialog} 
+          onClose={() => setShowPreviewDialog(false)} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }
+          }}
+        >
+          <DialogTitle>
+            Xem trước câu hỏi ({previewQuestions.length})
+            <IconButton
+              onClick={() => setShowPreviewDialog(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent dividers sx={{ p: 2, overflow: 'auto' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {previewQuestions.map((question, index) => (
+                <Paper
+                  key={index}
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography 
+                        variant="subtitle1" 
+                        sx={{ 
+                          fontWeight: 500,
+                          color: 'primary.main',
+                          minWidth: '60px'
+                        }}
+                      >
+                        Câu {index + 1}
+                      </Typography>
+                      <Typography>{question.questionText}</Typography>
+                      {question.valid === false && question.errorMessage && (
+                        <Tooltip title={question.errorMessage || "Câu h�i không hợp lệ"}>
+                          <ErrorIcon color="error" sx={{ ml: 1 }} />
+                        </Tooltip>
+                      )}
+                    </Box>
+                    <IconButton 
+                      onClick={() => handleEditPreviewQuestion(question)}
+                      size="small"
+                      sx={{ 
+                        color: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'primary.lighter'
+                        }
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+
+                  <Box sx={{ pl: 8 }}>
+                    <Grid container spacing={2}>
+                      {question.answers.map((answer, aIndex) => (
+                        <Grid item xs={6} key={aIndex}>
+                          <Box
+                            sx={{
+                              p: 1,
+                              borderRadius: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              backgroundColor: answer.isCorrect === 1 ? 'success.lighter' : 'grey.50',
+                              border: '1px solid',
+                              borderColor: answer.isCorrect === 1 ? 'success.light' : 'grey.300'
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: answer.isCorrect === 1 ? 'success.dark' : 'text.primary',
+                                fontWeight: answer.isCorrect === 1 ? 500 : 400
+                              }}
+                            >
+                              {String.fromCharCode(65 + aIndex)}. {answer.answerText}
+                            </Typography>
+                            {answer.isCorrect === 1 && (
+                              <CheckCircleIcon 
+                                fontSize="small" 
+                                sx={{ 
+                                  ml: 'auto',
+                                  color: 'success.main'
+                                }} 
+                              />
+                            )}
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          </DialogContent>
+
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={() => {
+                setShowPreviewDialog(false);
+                setOpenImportDialog(true);
+              }}
+            >
+              Quay lại
+            </Button>
+            <Button 
+              onClick={handleImportAfterPreview} 
+              variant="contained"
+              disabled={!importFormData.quizName || !importFormData.subjectId || !importFormData.duration}
+            >
+              Thêm đề thi
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog chỉnh sửa câu hỏi */}
+        <Dialog 
+          open={!!editingPreviewQuestion} 
+          onClose={() => setEditingPreviewQuestion(null)} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: { maxHeight: '90vh' }
+          }}
+        >
+          <DialogTitle>Chỉnh sửa câu hỏi</DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Câu hỏi"
+                value={editingPreviewQuestion?.questionText || ''}
+                onChange={(e) => setEditingPreviewQuestion({
+                  ...editingPreviewQuestion,
+                  questionText: e.target.value
+                })}
+              />
+              
+              {editingPreviewQuestion?.answers.map((answer, index) => (
+                <Box key={index} sx={{ 
+                  display: 'flex', 
+                  gap: 1,
+                  alignItems: 'flex-start' 
+                }}>
+                  <TextField
+                    fullWidth
+                    label={`Đáp án ${String.fromCharCode(65 + index)}`}
+                    value={answer.answerText}
+                    onChange={(e) => {
+                      const newAnswers = [...editingPreviewQuestion.answers];
+                      newAnswers[index] = { ...answer, answerText: e.target.value };
+                      setEditingPreviewQuestion({
+                        ...editingPreviewQuestion,
+                        answers: newAnswers
+                      });
+                    }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Radio // Thay Checkbox bằng Radio
+                        checked={answer.isCorrect === 1}
+                        onChange={(e) => {
+                          const newAnswers = editingPreviewQuestion.answers.map((ans, idx) => ({
+                            ...ans,
+                            isCorrect: idx === index ? 1 : 0 // Set tất cả về 0, chỉ đáp án được chọn là 1
+                          }));
+                          setEditingPreviewQuestion({
+                            ...editingPreviewQuestion,
+                            answers: newAnswers
+                          });
+                        }}
+                      />
+                    }
+                    label="Đúng"
+                  />
+                  <IconButton 
+                    onClick={() => handleRemoveAnswer(index)}
+                    color="error"
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddAnswer}
+                sx={{ mt: 1 }}
+              >
+                Thêm đáp án
+              </Button>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setEditingPreviewQuestion(null)}>Hủy</Button>
+            <Button onClick={handleSavePreviewQuestion} variant="contained">
+              Lưu
             </Button>
           </DialogActions>
         </Dialog>

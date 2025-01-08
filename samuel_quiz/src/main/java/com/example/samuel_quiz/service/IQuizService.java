@@ -3,6 +3,7 @@ package com.example.samuel_quiz.service;
 import java.io.IOException;
 import java.util.List;
 
+import com.example.samuel_quiz.dto.question.QuestionPreviewDTO;
 import com.example.samuel_quiz.dto.quiz.request.QuizCreateRequest;
 import com.example.samuel_quiz.dto.quiz.request.QuizUpdateRequest;
 import com.example.samuel_quiz.dto.quiz.request.QuizImportRequest;
@@ -23,12 +24,6 @@ public interface IQuizService {
 
     void deleteQuiz(Long quizId);
 
-    QuizResponse importQuiz(QuizImportRequest request);
-
-    QuizResponse importQuizFromWord(QuizImportRequest request);
-
-    QuizResponse importQuizFromPDF(QuizImportRequest request);
-
     ResultResponse gradeQuiz(QuizSubmissionRequest request);
 
     byte[] createWordQuiz(Long quizId, Long templateId) throws IOException;
@@ -43,7 +38,7 @@ public interface IQuizService {
         return createPDFQuiz(quizId, templateId);
     }
 
-    List<QuestionDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException;
+    List<QuestionPreviewDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException;
     
-    QuizResponse importQuizAfterPreview(QuizImportRequest request, List<QuestionDTO> editedQuestions);
+    QuizResponse importQuizAfterPreview(QuizImportRequest request);
 }
