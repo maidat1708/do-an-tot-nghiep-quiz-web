@@ -9,6 +9,8 @@ import com.example.samuel_quiz.dto.quiz.request.QuizImportRequest;
 import com.example.samuel_quiz.dto.quiz.request.QuizSubmissionRequest;
 import com.example.samuel_quiz.dto.quiz.response.QuizResponse;
 import com.example.samuel_quiz.dto.result.response.ResultResponse;
+import com.example.samuel_quiz.dto.question.QuestionDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface IQuizService {
     List<QuizResponse> getQuizzes();
@@ -41,4 +43,7 @@ public interface IQuizService {
         return createPDFQuiz(quizId, templateId);
     }
 
+    List<QuestionDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException;
+    
+    QuizResponse importQuizAfterPreview(QuizImportRequest request, List<QuestionDTO> editedQuestions);
 }

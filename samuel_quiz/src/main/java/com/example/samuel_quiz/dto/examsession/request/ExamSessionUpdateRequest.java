@@ -16,4 +16,5 @@ public class ExamSessionUpdateRequest {
     private Long quizId;
     private Set<String> teacherIds;
     private Set<String> studentIds;
+    private Boolean allowReview;
 }

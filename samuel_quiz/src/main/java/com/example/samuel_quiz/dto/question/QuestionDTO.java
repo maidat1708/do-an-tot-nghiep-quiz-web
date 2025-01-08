@@ -24,4 +24,6 @@ public class QuestionDTO {
     Integer level;
     SubjectDTO subject;
     Set<AnswerDTO> answers;
+    boolean isValid;
+    String errorMessage;
 }

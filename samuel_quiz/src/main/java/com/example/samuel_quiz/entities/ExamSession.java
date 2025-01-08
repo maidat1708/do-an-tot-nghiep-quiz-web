@@ -49,4 +49,7 @@ public class ExamSession {
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> students = new HashSet<>();
+
+    @Column(nullable = false)
+    private Boolean allowReview = false;
 } 

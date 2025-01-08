@@ -28,4 +28,7 @@ public class ExamSessionCreateRequest {
     
     @NotEmpty  
     private Set<String> studentIds;
+    
+    @NotNull
+    private Boolean allowReview;
 }

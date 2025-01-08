@@ -20,4 +20,5 @@ public class ExamSessionResponse {
     private Set<UserResponse> teachers;
     private Set<UserResponse> students;
     private String status;
+    private Boolean allowReview;
 } 

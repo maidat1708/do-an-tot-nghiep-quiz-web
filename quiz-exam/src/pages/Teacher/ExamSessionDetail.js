@@ -344,17 +344,6 @@ const ExamSessionDetail = () => {
           Xem kết quả
         </Button>
       </Box>
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleOpenStats}
-        disabled={loading}
-        startIcon={loading && <CircularProgress size={20} color="inherit" />}
-      >
-        {loading ? 'Đang tải...' : 'Xem Thống Kê'}
-      </Button>
-
       <Dialog
         open={openStats}
         onClose={() => setOpenStats(false)}

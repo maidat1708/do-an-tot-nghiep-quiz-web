@@ -117,6 +117,7 @@ public class ExamSessionService implements IExamSessionService {
                 .quiz(quiz)
                 .teachers(teachers)
                 .students(students)
+                .allowReview(request.getAllowReview())
                 .build();
 
         return examSessionMapper.toResponse(examSessionRepository.save(examSession));
@@ -152,7 +153,11 @@ public class ExamSessionService implements IExamSessionService {
             Set<User> students = validateAndGetStudents(request.getStudentIds());
             examSession.setStudents(students);
         }
-        
+
+        if(request.getAllowReview() != null) {
+            examSession.setAllowReview(request.getAllowReview());
+        }
+
         return examSessionMapper.toResponse(examSessionRepository.save(examSession));
     }
 

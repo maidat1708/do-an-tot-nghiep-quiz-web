@@ -3,12 +3,7 @@ package com.example.samuel_quiz.service.impl;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.example.samuel_quiz.dto.answer.AnswerDTO;
@@ -37,6 +32,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -110,10 +106,23 @@ public class QuizService implements IQuizService {
     public QuizResponse getQuiz(Long quizId) {
         Quiz quiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
+        
+        // Chuyển QuestionHistories sang List để có thể trộn
+        List<QuestionHistory> shuffledQuestions = new ArrayList<>(quiz.getQuestionHistories());
+        Collections.shuffle(shuffledQuestions); // Trộn thứ tự câu hỏi
+        
+        // Trộn thứ tự đáp án cho mỗi câu hỏi và dùng LinkedHashSet để giữ thứ tự
+        shuffledQuestions.forEach(question -> {
+            List<AnswerHistory> shuffledAnswers = new ArrayList<>(question.getAnswerHistories());
+            Collections.shuffle(shuffledAnswers); // Trộn thứ tự đáp án
+            question.setAnswerHistories(new LinkedHashSet<>(shuffledAnswers));
+        });
+        
         QuizDTO quizDTO = quizMapper.toDto(quiz);
         QuizResponse quizResponse = quizMapper.toQuizResponse(quizDTO);
         quizResponse.setSubject(subjectMapper.toDto(quiz.getSubject()));
-        quizResponse.setQuestionHistories(new HashSet<>(questionHistoryMapper.toListDto(quiz.getQuestionHistories().stream().toList())));
+        quizResponse.setQuestionHistories(new LinkedHashSet<>(questionHistoryMapper.toListDto(shuffledQuestions)));
+        
         return quizResponse;
     }
 
@@ -440,7 +449,12 @@ public class QuizService implements IQuizService {
 
         // Cập nhật và lưu Result
         result.setCorrectAnswer(correctAnswers);
-        result.setScore((double) correctAnswers / quiz.getTotalQuestion() * 10);
+        
+        // Tính điểm và làm tròn theo yêu cầu
+        double rawScore = ((double) correctAnswers / quiz.getTotalQuestion() * 10);
+        double roundedScore = roundScore(rawScore);
+        result.setScore(roundedScore);
+        
         result.setResultDetails(resultDetails);
         if(request.getExamSessionId() != null) {
             result.setExamSession(examSessionRepository.findById(request.getExamSessionId()).orElse(null));
@@ -512,5 +526,115 @@ public class QuizService implements IQuizService {
                     return q;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Thêm phương thức làm tròn điểm
+    private double roundScore(double score) {
+        double decimal = score - Math.floor(score); // Lấy phần thập phân
+        
+        if (decimal >= 0.75) {
+            return Math.ceil(score); // Làm tròn lên 1
+        } else if (decimal >= 0.5) {
+            return Math.floor(score) + 0.5; // Làm tròn xuống 0.5
+        } else if (decimal > 0.25) {
+            return Math.floor(score) + 0.5; // Làm tròn lên 0.5
+        } else {
+            return Math.floor(score); // Làm tròn xuống 0
+        }
+    }
+
+    @Override
+    public List<QuestionDTO> previewQuestionsFromFile(MultipartFile file, String fileType) throws IOException {
+        List<QuestionDTO> questions;
+        
+        switch (fileType.toLowerCase()) {
+            case "pdf":
+                questions = pdfService.readQuestionsFromPDF(file);
+                break;
+            case "word":
+                questions = wordService.readQuestionsFromWord(file);
+                break;
+            default:
+                throw new AppException(ErrorCode.BAD_REQUEST, "Unsupported file type");
+        }
+        
+        // Phân loại câu hỏi thành hợp lệ và không hợp lệ
+        List<QuestionDTO> result = questions.stream()
+            .map(question -> {
+                // Validate câu hỏi
+                boolean isValid = validateQuestion(question);
+                question.setValid(isValid);
+                return question;
+            })
+            .collect(Collectors.toList());
+        
+        return result;
+    }
+
+    private boolean validateQuestion(QuestionDTO question) {
+        // Kiểm tra câu hỏi có hợp lệ không
+        if (question.getQuestionText() == null || question.getQuestionText().trim().isEmpty()) {
+            question.setErrorMessage("Nội dung câu hỏi không được để trống");
+            return false;
+        }
+        
+        // Kiểm tra đáp án
+        if (question.getAnswers() == null || question.getAnswers().isEmpty()) {
+            question.setErrorMessage("Câu hỏi phải có ít nhất một đáp án");
+            return false;
+        }
+        
+        // Kiểm tra có đáp án đúng không
+        boolean hasCorrectAnswer = question.getAnswers().stream()
+            .anyMatch(answer -> answer.getIsCorrect() == 1);
+        if (!hasCorrectAnswer) {
+            question.setErrorMessage("Câu hỏi phải có ít nhất một đáp án đúng");
+            return false;
+        }
+        
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public QuizResponse importQuizAfterPreview(QuizImportRequest request, List<QuestionDTO> editedQuestions) {
+        Subject subject = subjectRepo.findById(request.getSubjectId())
+                .orElseThrow(() -> new EntityNotFoundException("Subject not found"));
+                
+        // Tạo các Question và Answer từ câu hỏi đã chỉnh sửa
+        Set<QuestionHistory> questionHistories = editedQuestions.stream()
+                .map(questionDTO -> {
+                    QuestionHistory questionHistory = new QuestionHistory();
+                    questionHistory.setQuestionText(questionDTO.getQuestionText());
+                    questionHistory.setLevel(questionDTO.getLevel());
+                    questionHistory.setSubject(subject);
+                    
+                    Set<AnswerHistory> answerHistories = questionDTO.getAnswers().stream()
+                            .map(answerDTO -> {
+                                AnswerHistory answerHistory = new AnswerHistory();
+                                answerHistory.setAnswerText(answerDTO.getAnswerText());
+                                answerHistory.setIsCorrect(answerDTO.getIsCorrect());
+                                answerHistory.setQuestionHistory(questionHistory);
+                                return answerHistory;
+                            })
+                            .collect(Collectors.toSet());
+                    
+                    questionHistory.setAnswerHistories(answerHistories);
+                    return questionHistory;
+                })
+                .collect(Collectors.toSet());
+
+        // Tạo Quiz mới
+        Quiz quiz = Quiz.builder()
+                .quizName(request.getQuizName())
+                .duration(request.getDuration())
+                .totalQuestion((long) editedQuestions.size())
+                .subject(subject)
+                .questionHistories(questionHistories)
+                .status(1)
+                .build();
+
+        Quiz savedQuiz = quizRepo.save(quiz);
+        return quizMapper.toQuizResponse(quizMapper.toDto(savedQuiz));
     }
 }
